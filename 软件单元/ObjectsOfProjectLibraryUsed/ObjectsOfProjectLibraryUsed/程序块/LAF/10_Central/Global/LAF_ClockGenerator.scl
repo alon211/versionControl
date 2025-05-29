@@ -1,0 +1,281 @@
+﻿FUNCTION_BLOCK "LAF_ClockGenerator"
+TITLE = LAF_ClockGen
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LAF
+VERSION : 1.2
+//This block is used instead of the hardware clock memory byte. The squarewave signals on the outputs of the block are the same as the clock bits of the clock memory byte.
+//
+//**Parameters**  
+//The block have only the output parameters.
+//
+   VAR_OUTPUT 
+      clk10Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 10Hz
+      clk5Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 5Hz
+      clk2Hz5 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 2,5Hz
+      clk2Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 2Hz
+      clk1Hz25 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 1,25Hz
+      clk1Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 1Hz
+      clk0Hz625 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 0,625Hz
+      clk0Hz5 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Output for 0,5Hz
+   END_VAR
+
+   VAR 
+      statMemRuntime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : LReal;   // Storage variable for cycletime calulation
+      statCalcTimeClk10Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 10Hz
+      statCalcTimeClk5Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 5Hz
+      statCalcTimeClk2Hz5 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 2,5Hz
+      statCalcTimeClk2Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 2Hz
+      statCalcTimeClk1Hz25 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 1,25Hz
+      statCalcTimeClk1Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 1Hz
+      statCalcTimeClk0Hz625 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 0,625Hz
+      statCalcTimeClk0Hz5 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UDInt;   // Calculation value for 0,5Hz
+      statStateFlagClk10Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  10Hz
+      statStateFlagClk5Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  5Hz
+      statStateFlagClk2Hz5 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  2,5Hz
+      statStateFlagClk2Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  2Hz
+      statStateFlagClk1Hz25 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  1,25Hz
+      statStateFlagClk1Hz { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  1Hz
+      statStateFlagClk0Hz625 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  0,625Hz
+      statStateFlagClk0Hz5 { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Status flag for  0,5Hz
+   END_VAR
+
+   VAR_TEMP 
+      tempCycleTimeMicroS : UDInt;   // Cycle time in micro-seconds
+   END_VAR
+
+   VAR CONSTANT 
+      PULSE_WIDTH_CLK10HZ : UDInt := 50000;   // Pulse width for 10Hz
+      PULSE_WIDTH_CLK5HZ : UDInt := 100000;   // Pulse width for 5Hz
+      PULSE_WIDTH_CLK2_5HZ : UDInt := 200000;   // Pulse width for 2,5Hz
+      PULSE_WIDTH_CLK2HZ : UDInt := 250000;   // Pulse width for 2Hz
+      PULSE_WIDTH_CLK1_25HZ : UDInt := 400000;   // Pulse width for 1,25Hz
+      PULSE_WIDTH_CLK1HZ : UDInt := 500000;   // Pulse width for 1Hz
+      PULSE_WIDTH_CLK0_625HZ : UDInt := 800000;   // Pulse width for 0,625Hz
+      PULSE_WIDTH_CLK0_5HZ : UDInt := 1000000;   // Pulse width for 0,5Hz
+      MICRO_SECONDS : Real := 1000000.0;   // Constant factor micro secounds
+   END_VAR
+
+
+BEGIN
+	REGION Block info header
+	  //=============================================================================
+	  // SIEMENS AG/ (c)Copyright 2024 
+	  //-----------------------------------------------------------------------------
+	  // Title:            LAF_ClockGen
+	  // Comment/Function: This function generates the same clocksignals like the clock memorybites.
+	  // Library/Family:   LAF - Library of Automation Framework
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      S7-PLCSIM Advanced V6.0
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     -
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge       | Changes applied
+	  //----------|------------|------------------------|------------------------------
+	  // 01.02.00 | 30.09.2024 |SIMATIC Systems Support |  First released version
+	  //=============================================================================
+	END_REGION Block info header
+	
+	REGION DESCRIPTION
+	  (/*
+	The outputs are boolean values witch toggles at the desired frequency. The accuracy of the pulsewidth depends on the cycle time of the PLC, 
+	but the absolute Position of the clock signal is fixed.
+	So it's posible to use this signals for time calculation.
+	*/)
+	END_REGION DESCRIPTION
+	
+	
+	REGION Read current cyletime
+	  #tempCycleTimeMicroS := LREAL_TO_UDINT((RUNTIME(#statMemRuntime)) * #MICRO_SECONDS);
+	END_REGION
+	
+	
+	REGION Calculation of settings and program execution for 10Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk10Hz" := #"statCalcTimeClk10Hz" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk10Hz AND #"statCalcTimeClk10Hz" / #PULSE_WIDTH_CLK10HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk10Hz := TRUE;
+	    #"statCalcTimeClk10Hz" := #"statCalcTimeClk10Hz" MOD #PULSE_WIDTH_CLK10HZ;
+	    
+	  //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk10Hz AND #"statCalcTimeClk10Hz" / #PULSE_WIDTH_CLK10HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk10Hz := FALSE;
+	    #"statCalcTimeClk10Hz" := #"statCalcTimeClk10Hz" MOD #PULSE_WIDTH_CLK10HZ;
+	  
+	  END_IF;
+	END_REGION
+	
+	REGION Calculation of settings and program execution for 5Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk5Hz" := #"statCalcTimeClk5Hz" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk5Hz AND #"statCalcTimeClk5Hz" / #PULSE_WIDTH_CLK5HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk5Hz := TRUE;
+	    #"statCalcTimeClk5Hz" := #"statCalcTimeClk5Hz" MOD #PULSE_WIDTH_CLK5HZ;
+	    
+	    //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk5Hz AND #"statCalcTimeClk5Hz" / #PULSE_WIDTH_CLK5HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk5Hz := FALSE;
+	    #"statCalcTimeClk5Hz" := #"statCalcTimeClk5Hz" MOD #PULSE_WIDTH_CLK5HZ;
+	    
+	  END_IF;
+	END_REGION
+	
+	REGION Calculation of settings and program execution for 2_5Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk2Hz5" := #"statCalcTimeClk2Hz5" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk2Hz5 AND #"statCalcTimeClk2Hz5" / #PULSE_WIDTH_CLK2_5HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk2Hz5 := TRUE;
+	    #"statCalcTimeClk2Hz5" := #"statCalcTimeClk2Hz5" MOD #PULSE_WIDTH_CLK2_5HZ;
+	    
+	    //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk2Hz5 AND #"statCalcTimeClk2Hz5" / #PULSE_WIDTH_CLK2_5HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk2Hz5 := FALSE;
+	    #"statCalcTimeClk2Hz5" := #"statCalcTimeClk2Hz5" MOD #PULSE_WIDTH_CLK2_5HZ;
+	    
+	  END_IF;
+	END_REGION
+	
+	REGION Calculation of settings and program execution for 2Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk2Hz" := #"statCalcTimeClk2Hz" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk2Hz AND #"statCalcTimeClk2Hz" / #PULSE_WIDTH_CLK2HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk2Hz := TRUE;
+	    #"statCalcTimeClk2Hz" := #"statCalcTimeClk2Hz" MOD #PULSE_WIDTH_CLK2HZ;
+	    
+	    //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk2Hz AND #"statCalcTimeClk2Hz" / #PULSE_WIDTH_CLK2HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk2Hz := FALSE;
+	    #"statCalcTimeClk2Hz" := #"statCalcTimeClk2Hz" MOD #PULSE_WIDTH_CLK2HZ;
+	    
+	  END_IF;
+	END_REGION
+	
+	REGION Calculation of settings and program execution for 1_25Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk1Hz25" := #"statCalcTimeClk1Hz25" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk1Hz25 AND #"statCalcTimeClk1Hz25" / #PULSE_WIDTH_CLK1_25HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk1Hz25 := TRUE;
+	    #"statCalcTimeClk1Hz25" := #"statCalcTimeClk1Hz25" MOD #PULSE_WIDTH_CLK1_25HZ;
+	    
+	    //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk1Hz25 AND #"statCalcTimeClk1Hz25" / #PULSE_WIDTH_CLK1_25HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk1Hz25 := FALSE;
+	    #"statCalcTimeClk1Hz25" := #"statCalcTimeClk1Hz25" MOD #PULSE_WIDTH_CLK1_25HZ;
+	    
+	  END_IF;
+	END_REGION
+	
+	REGION Calculation of settings and program execution for 1Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk1Hz" := #"statCalcTimeClk1Hz" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk1Hz AND #"statCalcTimeClk1Hz" / #PULSE_WIDTH_CLK1HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk1Hz := TRUE;
+	    #"statCalcTimeClk1Hz" := #"statCalcTimeClk1Hz" MOD #PULSE_WIDTH_CLK1HZ;
+	    
+	    //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk1Hz AND #"statCalcTimeClk1Hz" / #PULSE_WIDTH_CLK1HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk1Hz := FALSE;
+	    #"statCalcTimeClk1Hz" := #"statCalcTimeClk1Hz" MOD #PULSE_WIDTH_CLK1HZ;
+	    
+	  END_IF;
+	END_REGION
+	
+	REGION Calculation of settings and program execution for 0_625Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk0Hz625" := #"statCalcTimeClk0Hz625" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk0Hz625 AND #"statCalcTimeClk0Hz625" / #PULSE_WIDTH_CLK0_625HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk0Hz625 := TRUE;
+	    #"statCalcTimeClk0Hz625" := #"statCalcTimeClk0Hz625" MOD #PULSE_WIDTH_CLK0_625HZ;
+	    
+	    //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk0Hz625 AND #"statCalcTimeClk0Hz625" / #PULSE_WIDTH_CLK0_625HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk0Hz625 := FALSE;
+	    #"statCalcTimeClk0Hz625" := #"statCalcTimeClk0Hz625" MOD #PULSE_WIDTH_CLK0_625HZ;
+	    
+	  END_IF;
+	END_REGION
+	
+	REGION Calculation of settings and program execution for 0_5Hz
+	  //Sum up the cycletime
+	  #"statCalcTimeClk0Hz5" := #"statCalcTimeClk0Hz5" + #tempCycleTimeMicroS;
+	  
+	  //Calculation if positive flag is active
+	  IF NOT #statStateFlagClk0Hz5 AND #"statCalcTimeClk0Hz5" / #PULSE_WIDTH_CLK0_5HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function
+	    #statStateFlagClk0Hz5 := TRUE;
+	    #"statCalcTimeClk0Hz5" := #"statCalcTimeClk0Hz5" MOD #PULSE_WIDTH_CLK0_5HZ;
+	    
+	    //Calculation if negative flag is active  
+	  ELSIF #statStateFlagClk0Hz5 AND #"statCalcTimeClk0Hz5" / #PULSE_WIDTH_CLK0_5HZ >= 1 THEN
+	    
+	    //Set statusfalg and write remainder with modulo function 
+	    #statStateFlagClk0Hz5 := FALSE;
+	    #"statCalcTimeClk0Hz5" := #"statCalcTimeClk0Hz5" MOD #PULSE_WIDTH_CLK0_5HZ;
+	    
+	  END_IF;
+	END_REGION
+	
+	
+	REGION Writing Output
+	  //Write statusbit to output
+	  #clk10Hz := NOT #statStateFlagClk10Hz;
+	  #clk5Hz := NOT #statStateFlagClk5Hz;
+	  #clk2Hz5 := NOT #statStateFlagClk2Hz5;
+	  #clk2Hz := NOT #statStateFlagClk2Hz;
+	  #clk1Hz25 := NOT #statStateFlagClk1Hz25;
+	  #clk1Hz := NOT #statStateFlagClk1Hz;
+	  #clk0Hz625 := NOT #statStateFlagClk0Hz625;
+	  #clk0Hz5 := NOT #statStateFlagClk0Hz5;
+	  ENO := TRUE;
+	END_REGION
+	
+	
+	
+	
+END_FUNCTION_BLOCK
+

@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="state" Datatype="DInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Status of actual encoder value (0=not valid, 1=waiting for valid status, 2=valid)</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Status of actual encoder value (0=not valid, 1=waiting for valid status, 2=valid)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="communicationOK" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Cyclic bus communication between controller and encoder</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Cyclic bus communication between controller and encoder (FALSE = not established, TRUE = established)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="error" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Error in the measuring system</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">FALSE = no error in the measuring system, TRUE = error in the measuring system</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="control" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Encoder is active</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">FALSE = encoder is not active, TRUE = encoder is active</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="position" Datatype="LReal">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Encoder position</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Encoder position</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="velocity" Datatype="LReal">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Encoder velocity</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Encoder velocity</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="adaptionState" Datatype="DInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Status of automatic data transfer of encoder parameters (0=not adapted, 1=in adaption, 2=adapted, 3= not applicable, 4=adaption error)</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Status of automatic data transfer of encoder parameters (0=not adapted, 1=in adaption, 2=adapted, 3= not applicable, 4=adaption error)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="adjusted" Datatype="DInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Homing status of the encoder (0=not homed, 1=homed (with active homing, passive homing, absolute encoder adjustment, incremental encoder adjustment))</MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>LAF_typeAxisDiagSensor</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>Status and actual values of an encoder of a Technology Object</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <MultilingualText ID="9" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="A" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>LAF_typeAxisDiagSensorStatus</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="B" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="C" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="D" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="E" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="F" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="10" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

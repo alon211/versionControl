@@ -1,0 +1,275 @@
+﻿FUNCTION "LUC_ModeStateToString" : Void
+TITLE = LUC_ModeStateToString
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+VERSION : 1.2
+//Converts the DInt Value of the _mode_ and _state_ into a string
+   VAR_INPUT 
+      mode : DInt;   // Current mode as DINT
+      state : DInt;   // Current state as DINT
+   END_VAR
+
+   VAR_OUTPUT 
+      modeString : String;   // Current mode as string
+      stateString : String;   // Current state as string
+   END_VAR
+
+   VAR_TEMP 
+      tempMode : String;   // Auxiliar variable to store the current mode
+      tempState : String;   // Auxiliar variable to store the current state
+   END_VAR
+
+   VAR CONSTANT 
+      LPMLV2022_MODE_INVALID : DInt := 0;   // OMAC PackMLV2022 unit mode Invalid
+      LPMLV2022_MODE_PRODUCTION : DInt := 1;   // OMAC PackMLV2022 unit mode Production
+      LPMLV2022_MODE_MAINTENANCE : DInt := 2;   // OMAC PackMLV2022 unit mode Maintenance
+      LPMLV2022_MODE_MANUAL : DInt := 3;   // OMAC PackMLV2022 unit mode Manual
+      LPMLV2022_MODE_USER_01 : DInt := 4;   // OMAC PackMLV2022 user-defined unit mode 01
+      LPMLV2022_MODE_USER_02 : DInt := 5;   // OMAC PackMLV2022 user-defined unit mode 02
+      LPMLV2022_MODE_USER_03 : DInt := 6;   // OMAC PackMLV2022 user-defined unit mode 03
+      LPMLV2022_MODE_USER_04 : DInt := 7;   // OMAC PackMLV2022 user-defined unit mode 04
+      LPMLV2022_MODE_USER_05 : DInt := 8;   // OMAC PackMLV2022 user-defined unit mode 05
+      LPMLV2022_MODE_USER_06 : DInt := 9;   // OMAC PackMLV2022 user-defined unit mode 06
+      LPMLV2022_MODE_USER_07 : DInt := 10;   // OMAC PackMLV2022 user-defined unit mode 07
+      LPMLV2022_MODE_USER_08 : DInt := 11;   // OMAC PackMLV2022 user-defined unit mode 08
+      LPMLV2022_MODE_USER_09 : DInt := 12;   // OMAC PackMLV2022 user-defined unit mode 09
+      LPMLV2022_MODE_USER_10 : DInt := 13;   // OMAC PackMLV2022 user-defined unit mode 10
+      LPMLV2022_MODE_USER_11 : DInt := 14;   // OMAC PackMLV2022 user-defined unit mode 11
+      LPMLV2022_MODE_USER_12 : DInt := 15;   // OMAC PackMLV2022 user-defined unit mode 12
+      LPMLV2022_MODE_USER_13 : DInt := 16;   // OMAC PackMLV2022 user-defined unit mode 13
+      LPMLV2022_MODE_USER_14 : DInt := 17;   // OMAC PackMLV2022 user-defined unit mode 14
+      LPMLV2022_MODE_USER_15 : DInt := 18;   // OMAC PackMLV2022 user-defined unit mode 15
+      LPMLV2022_MODE_USER_16 : DInt := 19;   // OMAC PackMLV2022 user-defined unit mode 16
+      LPMLV2022_MODE_USER_17 : DInt := 20;   // OMAC PackMLV2022 user-defined unit mode 17
+      LPMLV2022_MODE_USER_18 : DInt := 21;   // OMAC PackMLV2022 user-defined unit mode 18
+      LPMLV2022_MODE_USER_19 : DInt := 22;   // OMAC PackMLV2022 user-defined unit mode 19
+      LPMLV2022_MODE_USER_20 : DInt := 23;   // OMAC PackMLV2022 user-defined unit mode 20
+      LPMLV2022_MODE_USER_21 : DInt := 24;   // OMAC PackMLV2022 user-defined unit mode 21
+      LPMLV2022_MODE_USER_22 : DInt := 25;   // OMAC PackMLV2022 user-defined unit mode 22
+      LPMLV2022_MODE_USER_23 : DInt := 26;   // OMAC PackMLV2022 user-defined unit mode 23
+      LPMLV2022_MODE_USER_24 : DInt := 27;   // OMAC PackMLV2022 user-defined unit mode 24
+      LPMLV2022_MODE_USER_25 : DInt := 28;   // OMAC PackMLV2022 user-defined unit mode 25
+      LPMLV2022_MODE_USER_26 : DInt := 29;   // OMAC PackMLV2022 user-defined unit mode 26
+      LPMLV2022_MODE_USER_27 : DInt := 30;   // OMAC PackMLV2022 user-defined unit mode 27
+      LPMLV2022_MODE_USER_28 : DInt := 31;   // OMAC PackMLV2022 user-defined unit mode 28
+      LPMLV2022_STATE_UNDEFINED : DInt := 0;   // OMAC PackMLV2022 state Undefined
+      LPMLV2022_STATE_CLEARING : DInt := 1;   // OMAC PackMLV2022 state Clearing
+      LPMLV2022_STATE_STOPPED : DInt := 2;   // OMAC PackMLV2022 state Stopped
+      LPMLV2022_STATE_STARTING : DInt := 3;   // OMAC PackMLV2022 state Starting
+      LPMLV2022_STATE_IDLE : DInt := 4;   // OMAC PackMLV2022 state Idle
+      LPMLV2022_STATE_SUSPENDED : DInt := 5;   // OMAC PackMLV2022 state Suspended
+      LPMLV2022_STATE_EXECUTE : DInt := 6;   // OMAC PackMLV2022 state Execute
+      LPMLV2022_STATE_STOPPING : DInt := 7;   // OMAC PackMLV2022 state Stopping
+      LPMLV2022_STATE_ABORTING : DInt := 8;   // OMAC PackMLV2022 state Aborting
+      LPMLV2022_STATE_ABORTED : DInt := 9;   // OMAC PackMLV2022 state Aborted
+      LPMLV2022_STATE_HOLDING : DInt := 10;   // OMAC PackMLV2022 state Holding
+      LPMLV2022_STATE_HELD : DInt := 11;   // OMAC PackMLV2022 state Held
+      LPMLV2022_STATE_UNHOLDING : DInt := 12;   // OMAC PackMLV2022 state Unholding
+      LPMLV2022_STATE_SUSPENDING : DInt := 13;   // OMAC PackMLV2022 state Suspending
+      LPMLV2022_STATE_UNSUSPENDING : DInt := 14;   // OMAC PackMLV2022 state Unsuspending
+      LPMLV2022_STATE_RESETTING : DInt := 15;   // OMAC PackMLV2022 state Resetting
+      LPMLV2022_STATE_COMPLETING : DInt := 16;   // OMAC PackMLV2022 state Completing
+      LPMLV2022_STATE_COMPLETED : DInt := 17;   // OMAC PackMLV2022 state Completed
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //===============================================================================
+	  // Siemens AG / (c)Copyright 2024
+	  //-------------------------------------------------------------------------------
+	  // Title:            LUC_ModeStateToString
+	  // Comment/Function: Converts the DInt Value of the _mode_ and _state_ into a string
+	  // Library/Family:   LUC - Library of Unit Controls
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      S7-PLCSIM Advanced 6.0
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     -
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge        | Changes applied
+	  //----------|------------|-------------------------|-----------------------------
+	  // 01.00.00 | 26.04.2024 | SIMATIC Systems Support | First released version
+	  // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | Implemented the mode and state conversion in the same block. 
+	  // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Optimized code.
+	  //===============================================================================   
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	(/*
+	#### Relation between Dint _mode_ and _LUC_ModeToString_ string values
+	+--------------+------------------------------+
+	| MODE (DInt)  | LUC_ModeToString (String)                    
+	+==============+==============================+
+	| 0            | Invalid                      
+	+--------------+------------------------------+
+	| 1            | Production                   
+	+--------------+------------------------------+
+	| 2            | Maintenance                  
+	+--------------+------------------------------+
+	| 3            | Manual                       
+	+--------------+------------------------------+
+	| 4            | UserMode01          
+	+--------------+------------------------------+
+	| 5            | UserMode02          
+	+--------------+------------------------------+
+	| 6            | UserMode03          
+	+--------------+------------------------------+
+	| 7            | UserMode04          
+	+--------------+------------------------------+
+	| 8            | UserMode05          
+	+--------------+------------------------------+
+	| 9            | UserMode06                     
+	+--------------+------------------------------+
+	| 10           | UserMode07                  
+	+--------------+------------------------------+
+	| 11           | UserMode08                 
+	+--------------+------------------------------+
+	| 12           | UserMode09                       
+	+--------------+------------------------------+
+	| 13           | UserMode10          
+	+--------------+------------------------------+
+	| 14           | UserMode11          
+	+--------------+------------------------------+
+	| 15           | UserMode12          
+	+--------------+------------------------------+
+	| 16           | UserMode13          
+	+--------------+------------------------------+
+	
+	#### Relation between Dint _state_ and _LUC_StateToString_ String
+	+--------------------+------------------------------------+
+	| STATE (DInt)       | LUC_StateToString (LUC_typeStates)                           
+	+====================+====================================+
+	| 0                  | Undefined                       
+	+--------------------+------------------------------------+
+	| 1                  | Clearing                        
+	+--------------------+------------------------------------+
+	| 2                  | Stopped                         
+	+--------------------+------------------------------------+
+	| 3                  | Starting                       
+	+--------------------+------------------------------------+
+	| 4                  | Idle                            
+	+--------------------+------------------------------------+
+	| 5                  | Suspended                       
+	+--------------------+------------------------------------+
+	| 6                  | Execute                         
+	+--------------------+------------------------------------+
+	| 7                  | Stopping                        
+	+--------------------+------------------------------------+
+	| 8                  | Aborting                        
+	+--------------------+------------------------------------+
+	| 9                  | Aborted                         
+	+--------------------+------------------------------------+
+	| 10                 | Holding                         
+	+--------------------+------------------------------------+
+	| 11                 | Held                            
+	+--------------------+------------------------------------+
+	| 12                 | Unholding                       
+	+--------------------+------------------------------------+
+	| 13                 | Suspending                      
+	+--------------------+------------------------------------+
+	| 14                 | Resetting                       
+	+--------------------+------------------------------------+
+	| 15                 | Clearing                        
+	+--------------------+------------------------------------+
+	| 16                 | Completing                      
+	+--------------------+------------------------------------+
+	| 17                 | Completed                       
+	+--------------------+------------------------------------+
+	*/)
+	END_REGION
+	
+	REGION READ INPUTS AND EVALUATION
+	    //Current mode DInt to String
+	    CASE #mode OF
+	        #LPMLV2022_MODE_INVALID:
+	            #tempMode := 'Invalid';
+	        #LPMLV2022_MODE_PRODUCTION:
+	            #tempMode := 'Production';
+	        #LPMLV2022_MODE_MAINTENANCE:
+	            #tempMode := 'Maintenance';
+	        #LPMLV2022_MODE_MANUAL:
+	            #tempMode := 'Manual';
+	        #LPMLV2022_MODE_USER_01:
+	            #tempMode := 'Usermode 1';
+	        #LPMLV2022_MODE_USER_02:
+	            #tempMode := 'Usermode 2';
+	        #LPMLV2022_MODE_USER_03:
+	            #tempMode := 'Usermode 3';
+	        #LPMLV2022_MODE_USER_04:
+	            #tempMode := 'Usermode 4';
+	        #LPMLV2022_MODE_USER_05:
+	            #tempMode := 'Usermode 5';
+	        #LPMLV2022_MODE_USER_06:
+	            #tempMode := 'Usermode 6';
+	        #LPMLV2022_MODE_USER_07:
+	            #tempMode := 'Usermode 7';
+	        #LPMLV2022_MODE_USER_08:
+	            #tempMode := 'Usermode 8';
+	        #LPMLV2022_MODE_USER_09:
+	            #tempMode := 'Usermode 9';
+	        #LPMLV2022_MODE_USER_10:
+	            #tempMode := 'Usermode 10';
+	        #LPMLV2022_MODE_USER_11:
+	            #tempMode := 'Usermode 11';
+	        #LPMLV2022_MODE_USER_12:
+	            #tempMode := 'Usermode 12';
+	        #LPMLV2022_MODE_USER_13:
+	            #tempMode := 'Usermode 13';
+	        ELSE
+	            #tempMode := 'Unknown';
+	    END_CASE;
+	    
+	    //Current state DInt to String
+	    CASE #state OF
+	        #LPMLV2022_STATE_UNDEFINED:
+	            #tempState := 'Undefined';
+	        #LPMLV2022_STATE_CLEARING:
+	            #tempState := 'Clearing';
+	        #LPMLV2022_STATE_STOPPED:
+	            #tempState := 'Stopped';
+	        #LPMLV2022_STATE_STARTING:
+	            #tempState := 'Starting';
+	        #LPMLV2022_STATE_IDLE:
+	            #tempState := 'Idle';
+	        #LPMLV2022_STATE_SUSPENDED:
+	            #tempState := 'Suspended';
+	        #LPMLV2022_STATE_EXECUTE:
+	            #tempState := 'Execute';
+	        #LPMLV2022_STATE_STOPPING:
+	            #tempState := 'Stopping';
+	        #LPMLV2022_STATE_ABORTING:
+	            #tempState := 'Aborting';
+	        #LPMLV2022_STATE_ABORTED:
+	            #tempState := 'Aborted';
+	        #LPMLV2022_STATE_HOLDING:
+	            #tempState := 'Holding';
+	        #LPMLV2022_STATE_HELD:
+	            #tempState := 'Held';
+	        #LPMLV2022_STATE_UNHOLDING:
+	            #tempState := 'Unholding';
+	        #LPMLV2022_STATE_SUSPENDING:
+	            #tempState := 'Suspending';
+	        #LPMLV2022_STATE_UNSUSPENDING:
+	            #tempState := 'Unsuspending';
+	        #LPMLV2022_STATE_RESETTING:
+	            #tempState := 'Resetting';
+	        #LPMLV2022_STATE_COMPLETING:
+	            #tempState := 'Completing';
+	        #LPMLV2022_STATE_COMPLETED:
+	            #tempState := 'Completed';
+	        ELSE
+	            #tempState := 'Unknown';
+	    END_CASE;
+	END_REGION READ INPUTS AND EVALUATION
+	
+	REGION WRITE OUTPUTS
+	    //Write string outputs of the current mode and current state
+	    #modeString := #tempMode;
+	    #stateString := #tempState;
+	END_REGION
+	
+END_FUNCTION
+

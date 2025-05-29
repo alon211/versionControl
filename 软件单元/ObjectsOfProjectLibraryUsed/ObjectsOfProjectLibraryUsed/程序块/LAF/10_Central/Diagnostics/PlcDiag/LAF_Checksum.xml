@@ -1,0 +1,2978 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Blocks.FB ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <HeaderAuthor>Siemens Digital Industries</HeaderAuthor>
+      <HeaderFamily>LAF</HeaderFamily>
+      <HeaderVersion>1.2</HeaderVersion>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="Input">
+    <Member Name="plantIdentifier" Datatype="WString[#MAX_CHAR]">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_PredefinedAssignment" SystemDefined="true">WSTRING#'PLC-Checksum'</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Betriebsmittel Kennzeichen.  An diesem Parameter kann ein Text mit max. 24 Zeichen parametriert werden; dies kann beispielweise die Betriebsmittelkennzeichnung sein. Der Wert wird in die ProDiag-Warnmeldung mit eingebracht.</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Equipment identifying symbol.  The symbol is limited to 24 characters. It can contain the Equipment identifying symbol according to the hardware diagrams.  The text assigned here is used for the ProDiag alarm text in the alarm view.  </MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="textListId" Datatype="Int">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_PredefinedAssignment" SystemDefined="true">"TEXT_LIST_ID_CHECKSUM_PD"</StringAttribute>
+        <StringAttribute Name="S7_HiddenAssignment" SystemDefined="true">Show</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Text list ID</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Text list ID</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="dateTime" Datatype="Date_And_Time">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_PredefinedAssignment" SystemDefined="true">"GlobalInterface".globalUser.dateTime.DT</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Wird ein Unterschied zwischen der aktuellen und der vorherigen (alten) Checksumme festgestellt, so wird das mit Datum &amp; Uhrzeit abgespeichert und im Bild „Checksumme“ angezeigt.  Der Parameter ist vordefiniert und verweist auf nachfolgende Quelle  </MultiLanguageText>
+        <MultiLanguageText Lang="en-US">If the current checksum deviates from the old checksum, date and time are saved and displayed in the screen “Checksum”. </MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="readChecksum" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Verwenden Sie hier ein Signal, mit dem die PLC-Checksumme gelesen wird. Es reicht ein Impuls aus.</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Assign a signal to read the PLC checksums.  A pulse is enough. </MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="ack" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_PredefinedAssignment" SystemDefined="true">"GlobalInterface".globalHMI.globalAck</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Signal mit dem die ProDiag-Warnmeldung quittiert werden kann.  Der Parameter ist vordefiniert und verweist auf nachfolgende Quelle. Hinweis:  Mit dem globalAck. werden alle anstehenden Meldungen quittiert. Sollen nur die Meldungen für die PLC-Checksumme quittiert werden, so verwenden Sie den Button [OK Checksum] im Bild „Checksum“,  siehe WinCC-Bild</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">For this parameter, assign a signal to reset the ProDiag warnings.   Note:  All present alarms are reset with the globalAck. If you want to reset only the warnings for the PLC checksums, use the button [OK Checksum] in screen “Checksum".</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="hideMessageStandard" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_HiddenAssignment" SystemDefined="true">HideIfNoParamAssigned</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Der Parameter ist vordefiniert und verweist auf nachfolgende Quelle </MultiLanguageText>
+        <MultiLanguageText Lang="en-US">The ProDiag warning is suppressed / hidden if a TRUE-Signal is assigned.  Note: A TRUE signal does not suppress the color animation of the faceplate and of the WinCC objects in screen “Checksum”. This ensures that the difference of the PLC checksums is visible even if the ProDiag warning is hidden.</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="hideMessageSafety" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_HiddenAssignment" SystemDefined="true">HideIfNoParamAssigned</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Wie bei Parameter „hideMessageStandard“</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Like parameter “hideMessageStandard” </MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="hideMessageTextlist" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_HiddenAssignment" SystemDefined="true">HideIfNoParamAssigned</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Wie bei Parameter „hideMessageStandard“</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Like parameter “hideMessageStandard” </MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+  <Section Name="Output">
+    <Member Name="generalMessage" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+        <StringAttribute Name="S7_HiddenAssignment" SystemDefined="true">Show</StringAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Sammelwarnung</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">General alarm </MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+  <Section Name="InOut">
+    <Member Name="checksumHmi" Datatype="&quot;LAF_typeChecksum&quot;">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Transfer of the information for display on the HMI.</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">PLC checksum for HMI</MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+  <Section Name="Static">
+    <Member Name="statReadChecksumStorage" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Start: Lesen der PLC Checksummen (Storage)</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Start: Read PLC checksum (storage)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumStandard" Datatype="Array[0..7] of Byte">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Checksumme Standard</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum Standard</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumStafety" Datatype="Array[0..7] of Byte">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Checksumme Safety</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum Safety</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumTextlists" Datatype="Array[0..7] of Byte">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Checksumme Textlisten</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksumme Textlists</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumStandOldNull" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Vorherige Checksumme = Null (nichts)</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum old = null (nothing)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumSafeOldNull" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Vorherige Checksumme = Null (nichts)</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum old = null (nothing)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumTextlOldNull" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Vorherige Checksumme = Null (nichts)</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum old = null (nothing)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumStandDiff" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Checksumme unterschiedlich Standard</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum different Standard</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumSafeDiff" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Checksumme unterschiedlich Safety</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum different Safety</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statChecksumTextlDiff" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Checksumme unterschiedlich Textlisten</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Checksum different Textlists</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="instGetChecksum1" Datatype="GetChecksum" Version="1.0">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">GetChecksum1</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">GetChecksum1</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="instGetChecksum2" Datatype="GetChecksum" Version="1.0">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">GetChecksum2</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">GetChecksum2</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="instGetChecksum3" Datatype="GetChecksum" Version="1.0">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">GetChecksum3</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">GetChecksum3</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statRetValHta" Datatype="&quot;LAF_typeChecksumCatWord&quot;">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Ret_VAT von HTA</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">RET_VAL of HTA</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statRisEdgeDiff" Datatype="&quot;LAF_typeChecksumCatBool&quot;">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Steigende Flanke</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Rising edge</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statMessageStandModified" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Meldung: Standard Bausteine wurden modifiziert</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Message: Standard blocks are modified</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statMessageSafeModified" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Meldung: Safety Bausteine wurden modifiziert</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Message: Safety blocks are modified</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statMessageTextlModified" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Meldung: Textlisten wurden modifiziert</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Message: Textlists are modified</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statWarnNoStandard" Datatype="UInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Warn Nummer - Standard</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Warn number - Standard</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statWarnNoSafety" Datatype="UInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Warn Nummer - Safety</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Warn number - Safety</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="statWarnNoTextlist" Datatype="UInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalAccessible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalVisible" SystemDefined="true">false</BooleanAttribute>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Warn Nummer - Textlisten</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Warn number - Textlists</MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+  <Section Name="Temp" />
+  <Section Name="Constant">
+    <Member Name="MAX_CHAR" Datatype="DInt">
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Konstante für Zeichenlänge plantidentifier</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Constant length plantidentifier</MultiLanguageText>
+      </Comment>
+      <StartValue>24</StartValue>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <IsIECCheckEnabled>true</IsIECCheckEnabled>
+      <MemoryReserve>100</MemoryReserve>
+      <Name>LAF_Checksum</Name>
+      <Namespace />
+      <Number>40</Number>
+      <ProgrammingLanguage>LAD</ProgrammingLanguage>
+      <SetENOAutomatically>true</SetENOAutomatically>
+      <Supervisions><BlockTypeSupervisions xmlns="http://www.siemens.com/automation/Openness/SW/BlockTypeSupervisions/v3">
+  <BlockTypeSupervision Number="1" Type="MessageError">
+    <SupervisedOperand Name="#statMessageStandModified" />
+    <SupervisedStatus>true</SupervisedStatus>
+    <DelayOperand Name="T#0ms" />
+    <Conditions>
+      <Condition>
+        <ConditionOperand Number="1" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+      <Condition>
+        <ConditionOperand Number="2" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+      <Condition>
+        <ConditionOperand Number="3" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+    </Conditions>
+    <CategoryNumber>2</CategoryNumber>
+    <SubCategory1Number>1</SubCategory1Number>
+    <SubCategory2Number>2</SubCategory2Number>
+    <SpecificField>
+      <AssociatedValues>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="1" Name="#statWarnNoStandard" />
+        </AssociatedValue>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="2" Name="#plantIdentifier" />
+        </AssociatedValue>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="3" Name="#textListId" />
+        </AssociatedValue>
+      </AssociatedValues>
+      <SpecificFieldText>
+        <MultiLanguageText Lang="de-DE">@5%s@: @4%t#6@</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">@5%s@: @4%t#6@</MultiLanguageText>
+      </SpecificFieldText>
+    </SpecificField>
+  </BlockTypeSupervision>
+  <BlockTypeSupervision Number="2" Type="MessageError">
+    <SupervisedOperand Name="#statMessageSafeModified" />
+    <SupervisedStatus>true</SupervisedStatus>
+    <DelayOperand Name="T#0ms" />
+    <Conditions>
+      <Condition>
+        <ConditionOperand Number="1" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+      <Condition>
+        <ConditionOperand Number="2" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+      <Condition>
+        <ConditionOperand Number="3" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+    </Conditions>
+    <CategoryNumber>2</CategoryNumber>
+    <SubCategory1Number>1</SubCategory1Number>
+    <SubCategory2Number>2</SubCategory2Number>
+    <SpecificField>
+      <AssociatedValues>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="1" Name="#statWarnNoSafety" />
+        </AssociatedValue>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="2" Name="#plantIdentifier" />
+        </AssociatedValue>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="3" Name="#textListId" />
+        </AssociatedValue>
+      </AssociatedValues>
+      <SpecificFieldText>
+        <MultiLanguageText Lang="de-DE">@5%s@: @4%t#6@</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">@5%s@: @4%t#6@</MultiLanguageText>
+      </SpecificFieldText>
+    </SpecificField>
+  </BlockTypeSupervision>
+  <BlockTypeSupervision Number="3" Type="MessageError">
+    <SupervisedOperand Name="#statMessageTextlModified" />
+    <SupervisedStatus>true</SupervisedStatus>
+    <DelayOperand Name="T#0ms" />
+    <Conditions>
+      <Condition>
+        <ConditionOperand Number="1" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+      <Condition>
+        <ConditionOperand Number="2" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+      <Condition>
+        <ConditionOperand Number="3" Name="" />
+        <TriggeringStatus>true</TriggeringStatus>
+      </Condition>
+    </Conditions>
+    <CategoryNumber>2</CategoryNumber>
+    <SubCategory1Number>1</SubCategory1Number>
+    <SubCategory2Number>2</SubCategory2Number>
+    <SpecificField>
+      <AssociatedValues>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="1" Name="#statWarnNoTextlist" />
+        </AssociatedValue>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="2" Name="#plantIdentifier" />
+        </AssociatedValue>
+        <AssociatedValue>
+          <AssociatedValueOperand Number="3" Name="#textListId" />
+        </AssociatedValue>
+      </AssociatedValues>
+      <SpecificFieldText>
+        <MultiLanguageText Lang="de-DE">@5%s@: @4%t#6@</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">@5%s@: @4%t#6@</MultiLanguageText>
+      </SpecificFieldText>
+    </SpecificField>
+  </BlockTypeSupervision>
+</BlockTypeSupervisions></Supervisions>
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>The block reads the checksums for PLC standard blocks, for PLC safety blocks and for PLC text lists. The current checksums are compared with the previous values / old values. For each deviation a ProDiag warning is issued, and the colors of the WinCC buttons "Checksum"(SubMenu), "Ok Checksum" and "Settings" (Main Menu) are animated.
+
+**PLC-Data types**  
+* LAF_typeChecksum  
+* LAF_typeChecksumCatBool  
+* LAF_typeChecksumCatWord  
+
+**WinCC Screen**  
+
+{.pageWidth}
+![Image](LAF_Checksum_PrD/en/image1.PNG)
+
+**Block call example**  
+{.pageWidth}
+![Image](LAF_Checksum_PrD/en/image2.PNG)
+The call is shown as “Ladder Diagram” (LAD). 
+
+**Call interface**  
+The block is called once in the cyclic program. The call takes place in the software unit CentralFunctions -> 05_Diagnostic-> [CallDiagnostic](../Functions/CallDiagnostic.htm)  
+
+**Internally used “extended instructions / blocks”**  
+GetChecksum, HTA, S_COMP, S_MOVE  
+
+**Parameters**  
+This block is provided with “pre-defined actual parameters” for structured data types, user constants, system constants etc. Therefor these parameters must be modified only slightly or not at all, if the symbols of DBs, user constants, and system constants have not been changed.  
+
+</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text>
+Der Baustein liest die Checksummen für Standard- und Safety-Bausteine, sowie für Textlisten aus. Die aktuell ausgelesenen Checksummen werden mit den vorherigen Werten (Altwerte) verglichen. Bei Abweichungen wird jeweils eine ProDiag Warnmeldung ausgegeben und die WinCC-Objekte in dem Bild „System &amp; Einstellungen“ farblich animiert. Das Bild ist erreichbar über den Button „System“ (aus jedem Bild, rechts unten).  
+* LSicar_Checksum_PrD:	mit ProDiag-Meldeverfahren 
+* LSicar_Checksum		mit program_Alarm Meldeverfahren
+
+**PLC-Datentypen**  
+ LSicar_typeChecksum  
+ LSicar_typeChecksumCatBool  
+ LSicar_typeChecksumCatWord  
+ LSicar_typeAlarmText  
+ 
+
+**WinCC-Bild**  
+
+{.pageWidth}
+![Image](LSicar_Checksum_PrD/de/image1.PNG)
+
+**Beispielaufruf**  
+Abbildung in Kontaktplan (KOP), ohne Parameterbeschaltung. D:\Software\Symbols_Icons\BMPs-JPGs-PNGs\Verschiedene\symb_user_goto_transparent.pngEin lauffähiger Programm-Aufruf hierzu ist im „SICAR-StartUp“-Projekt enthalten, incl. der notwendigen HMI-Variablen zur Darstellung der Werte auf dem HMI.  
+
+**Aufrufschnittstelle**  
+Der Baustein wird einmalig im zyklischen Programm aufgerufen.  
+
+**Intern verwendete „Erweiterte Anweisungen / Bausteine“**  
+GetChecksum, HTA, S_COMP, S_MOVE  
+
+**Parameter**
+  
+![Icon](_Icon/information.PNG) 
+
+Der Baustein ist mit "Vordefinierten Aktualparametern" versehen für Strukturvariablen, Anwender- und Systemkonstanten etc., die dadurch nicht oder nur geringfügig angepasst werden müssen, vorausgesetzt die Symbolischen Namen von DBs, Anwender-/Systemkonstanten etc. wurden nicht geändert. Die Anpassungen sind notwendig beim Index [i], z.B. für den BA-Bereich oder die HMI-/Panelnummer.  
+
+* Der Index ist vorbesetzt mit dem Wert [0]. Damit wird auf den Index 0 (Dummy) verwiesen. Sofern der Baustein-Parameter nicht benötigt wird, sind keine Anpassungen notwendig, andernfalls muss der Indexwert angepasst werden.  
+oder  
+* Der Index ist vorbesetzt mit [???]. Dies führt dazu, dass der Aktualparameter beim Bausteinaufruf rot markiert wird; um darauf aufmerksam zu machen, dass der Indexwert des Aktualparameters angepasst werden muss!  
+
+ </Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <SW.Blocks.CompileUnit ID="9" CompositionName="CompileUnits">
+        <AttributeList>
+          <NetworkSource />
+          <ProgrammingLanguage>LAD</ProgrammingLanguage>
+        </AttributeList>
+        <ObjectList>
+          <MultilingualText ID="A" CompositionName="Comment">
+            <ObjectList>
+              <MultilingualTextItem ID="B" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>SIEMENS AG / (c)Copyright 2024
+------------------------------------------------------------------------------
+Title:            LAF_InterfaceSignalsBool
+Comment/Function: The block reads the checksums for PLC standard blocks, for PLC safety blocks and for PLC text lists. The current checksums are compared with the previous values / old values
+Library/Family:   Library of Automation Framework
+Author:                Siemens Digital Industry
+Tested with:       S7-PLCSIM Advanced 6.0
+Engineering:      TIA Portal V19
+Restrictions:       ---
+Requirements:   ---
+------------------------------------------------------------------------------
+Change log table:
+Version | Date | Expert in charge | Changes applied
+-------|---------|-------------|--------------------------------------------
+01.02.00 | 30.09.2024 | SIMATIC Systems Support | First released version </Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="C" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Die Änderungshistorie wird nur in englischer Editiersprache geführt.
+</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="D" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="E" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="F" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="10" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="11" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+          <MultilingualText ID="12" CompositionName="Title">
+            <ObjectList>
+              <MultilingualTextItem ID="13" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Header Info</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="14" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Änderungshistorie</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="15" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="16" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="17" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="18" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="19" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+        </ObjectList>
+      </SW.Blocks.CompileUnit>
+      <SW.Blocks.CompileUnit ID="1A" CompositionName="CompileUnits">
+        <AttributeList>
+          <NetworkSource />
+          <ProgrammingLanguage>LAD</ProgrammingLanguage>
+        </AttributeList>
+        <ObjectList>
+          <MultilingualText ID="1B" CompositionName="Comment">
+            <ObjectList>
+              <MultilingualTextItem ID="1C" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>**Operation mode Automatic / Manual**  
+The block is independent of operation modes. Therefor it is not assigned to any operation mode area.  
+
+**Alarms**  
+Alarm texts are stored in the PLC alarm text lists of the software unit GlobalData. This messages are used with proDiag and also in the program alarm version of the block.  
+
+| **No.** | **Message**             |
+|---------|-------------------------|
+| 1       | Standard block modified |
+| 2       | Safety block modified   |
+| 3       | Textlist modified       |
+| 4       | Spare4_en               |
+| 5       | Spare5_en               |
+| 6       | Spare6_en               |
+| 7       | Spare7_en               |
+| 8       | Spare8_en               |
+
+---
+
+#### PLC Data types 
+* [LAF_typeChecksum](../Library%20Types/LAF_typeChecksum.htm)  
+* [LAF_typeChecksumCatBool](../Library%20Types/LAF_typeChecksumCatBool.htm)  
+* [LAF_typeChecksumCatWord](../Library%20Types/LAF_typeChecksumCatWord.htm)  
+
+
+#### WinCC Objects 
+
+**WinCC Screen**  
+The screen is to be found in the project in the HMI part, in folder “Screens” -> 11_Settings. It consists of several WinCC objects and contains the information shown below.  
+![Image](LAF_Checksum_PrD/en/image1.PNG)
+
+---
+
+#### Further information 
+
+#### Update info
+
+#### Further documentation 
+</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="1D" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>
+**Betriebsart Automatik / Hand**  
+Der Baustein ist keiner Betriebsart / Betriebsartenbereich zugeordnet.  
+
+**Alarme**  
+Der Baustein generiert die in der PLC-Meldetextliste „PLC_Checksum_PD“ angegebenen Texte als ProDiag-Warnmeldungen, wenn die aktuelle und vorherige (Altwert) Checksumme unterschiedlich sind.  
+
+
+Die Textliste „PLC_Checksum_PD“ ist in der PLC-Meldetextliste „GLOBAL_GENERAL_AlarmTextList“ als Eintragsnummer 22 hinterlegt. Siehe auch FB-Parameter: „globalAlarmTextListItem“  
+ 
+![Image](LSicar_Checksum_PrD/de/image2.PNG)
+
+ 
+#### PLC Data types 
+
+“_typeChecksum” enthält alle Informationen, die in der Visualisierung angezeigt werden.   
+
+![Image](LSicar_Checksum_PrD/de/image3.PNG)
+ 
+“_typeChecksumCatBool” enthält die Struktur für Flankenauswertungen  
+
+![Image](LSicar_Checksum_PrD/de/image4.PNG)
+ 
+“_typeChecksumCatWord” enthält die Struktur für RetVal Werte.  
+
+![Image](LSicar_Checksum_PrD/de/image5.PNG)
+
+Weitere PLC-Datentypen:  
+
+![Icon](_Icon/reference.PNG)
+
+Siehe LSicar_typeAlarmText.pdf 
+ 
+
+#### WinCC-Bildobjekte
+
+**WinCC-Bild**  
+Das Bild befindet sich im Projekt im HMI-Teil unter „Bilder“. Es ist erstellt aus mehreren einzelnen WinCC-Objekten und enthält die dargestellten Informationen.  
+
+![Image](LSicar_Checksum_PrD/de/image6.PNG)
+
+**WinCC-Bildbaustein**  
+Der Bildbaustein PLC_Checksum befindet sich in der Projektbilbliothek und besteht aus mehreren einzelnen WinCC-Objekten. Er ist in den Startup-Projekten zusätzlich in der Kopfzeile projektiert. Bei Ungleichheit der PLC-Checksummen wird er orange animiert.  
+In dessen Schnittstelle können Sie die Default-Farbe einstellen. Für das Schnittstellensignal zum Animieren verwenden Sie die HMI-Variable  .summaryModified“.  
+
+![Image](LSicar_Checksum_PrD/de/image7.PNG)
+
+
+#### Further information 
+
+#### Update info
+
+#### Further documentation 
+
+</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="1E" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="1F" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="20" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="21" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="22" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+          <MultilingualText ID="23" CompositionName="Title">
+            <ObjectList>
+              <MultilingualTextItem ID="24" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Description</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="25" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Beschreibung</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="26" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="27" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="28" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="29" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="2A" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+        </ObjectList>
+      </SW.Blocks.CompileUnit>
+      <SW.Blocks.CompileUnit ID="2B" CompositionName="CompileUnits">
+        <AttributeList>
+          <NetworkSource><FlgNet xmlns="http://www.siemens.com/automation/Openness/SW/NetworkSource/FlgNet/v5">
+  <Parts>
+    <Access Scope="LocalVariable" UId="21">
+      <Symbol>
+        <Component Name="readChecksum" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="22">
+      <Symbol>
+        <Component Name="statReadChecksumStorage" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="23">
+      <Symbol>
+        <Component Name="statReadChecksumStorage" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="24">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>1</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="25">
+      <Symbol>
+        <Component Name="statChecksumStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="26">
+      <Symbol>
+        <Component Name="instGetChecksum1" />
+        <Component Name="Done" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="27">
+      <Symbol>
+        <Component Name="statChecksumStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="28">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>8</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="29">
+      <Symbol>
+        <Component Name="statRetValHta" />
+        <Component Name="standard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="30">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="31">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>2</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="32">
+      <Symbol>
+        <Component Name="statChecksumStafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="33">
+      <Symbol>
+        <Component Name="instGetChecksum2" />
+        <Component Name="Done" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="34">
+      <Symbol>
+        <Component Name="statChecksumStafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="35">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>8</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="36">
+      <Symbol>
+        <Component Name="statRetValHta" />
+        <Component Name="safety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="37">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumSafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="38">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>3</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="39">
+      <Symbol>
+        <Component Name="statChecksumTextlists" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="40">
+      <Symbol>
+        <Component Name="instGetChecksum3" />
+        <Component Name="Done" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="41">
+      <Symbol>
+        <Component Name="statChecksumTextlists" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="42">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>8</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="43">
+      <Symbol>
+        <Component Name="statRetValHta" />
+        <Component Name="textlists" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="44">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumTextlists" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="45">
+      <Symbol>
+        <Component Name="instGetChecksum1" />
+        <Component Name="Done" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="46">
+      <Symbol>
+        <Component Name="instGetChecksum2" />
+        <Component Name="Done" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="47">
+      <Symbol>
+        <Component Name="instGetChecksum3" />
+        <Component Name="Done" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="48">
+      <Symbol>
+        <Component Name="statReadChecksumStorage" />
+      </Symbol>
+    </Access>
+    <Part Name="Contact" UId="49" />
+    <Part Name="SCoil" UId="50" />
+    <Part Name="Contact" UId="51" />
+    <Part Name="GetChecksum" Version="1.0" UId="52">
+      <Instance Scope="LocalVariable" UId="53">
+        <Component Name="instGetChecksum1" />
+      </Instance>
+    </Part>
+    <Part Name="Contact" UId="54" />
+    <Part Name="HTA" Version="1.1" UId="55">
+      <TemplateValue Name="card" Type="Cardinality">1</TemplateValue>
+      <TemplateValue Name="n_type" Type="Type">UInt</TemplateValue>
+      <TemplateValue Name="in_out_type" Type="Type">Variant</TemplateValue>
+    </Part>
+    <Part Name="GetChecksum" Version="1.0" UId="56">
+      <Instance Scope="LocalVariable" UId="57">
+        <Component Name="instGetChecksum2" />
+      </Instance>
+    </Part>
+    <Part Name="Contact" UId="58" />
+    <Part Name="HTA" Version="1.1" UId="59">
+      <TemplateValue Name="card" Type="Cardinality">1</TemplateValue>
+      <TemplateValue Name="n_type" Type="Type">UInt</TemplateValue>
+      <TemplateValue Name="in_out_type" Type="Type">Variant</TemplateValue>
+    </Part>
+    <Part Name="GetChecksum" Version="1.0" UId="60">
+      <Instance Scope="LocalVariable" UId="61">
+        <Component Name="instGetChecksum3" />
+      </Instance>
+    </Part>
+    <Part Name="Contact" UId="62" />
+    <Part Name="HTA" Version="1.1" UId="63">
+      <TemplateValue Name="card" Type="Cardinality">1</TemplateValue>
+      <TemplateValue Name="n_type" Type="Type">UInt</TemplateValue>
+      <TemplateValue Name="in_out_type" Type="Type">Variant</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="64" />
+    <Part Name="Contact" UId="65" />
+    <Part Name="Contact" UId="66" />
+    <Part Name="RCoil" UId="67" />
+  </Parts>
+  <Wires>
+    <Wire UId="86">
+      <Powerrail />
+      <NameCon UId="49" Name="in" />
+      <NameCon UId="51" Name="in" />
+    </Wire>
+    <Wire UId="87">
+      <IdentCon UId="21" />
+      <NameCon UId="49" Name="operand" />
+    </Wire>
+    <Wire UId="88">
+      <NameCon UId="49" Name="out" />
+      <NameCon UId="50" Name="in" />
+    </Wire>
+    <Wire UId="89">
+      <IdentCon UId="22" />
+      <NameCon UId="50" Name="operand" />
+    </Wire>
+    <Wire UId="90">
+      <IdentCon UId="23" />
+      <NameCon UId="51" Name="operand" />
+    </Wire>
+    <Wire UId="91">
+      <NameCon UId="51" Name="out" />
+      <NameCon UId="52" Name="en" />
+      <NameCon UId="56" Name="en" />
+      <NameCon UId="60" Name="en" />
+      <NameCon UId="64" Name="in" />
+    </Wire>
+    <Wire UId="92">
+      <IdentCon UId="24" />
+      <NameCon UId="52" Name="Scope" />
+    </Wire>
+    <Wire UId="93">
+      <OpenCon UId="68" />
+      <NameCon UId="52" Name="Range" />
+    </Wire>
+    <Wire UId="94">
+      <OpenCon UId="69" />
+      <NameCon UId="52" Name="Subrange" />
+    </Wire>
+    <Wire UId="95">
+      <IdentCon UId="25" />
+      <NameCon UId="52" Name="Checksum" />
+    </Wire>
+    <Wire UId="96">
+      <NameCon UId="52" Name="eno" />
+      <NameCon UId="54" Name="in" />
+    </Wire>
+    <Wire UId="97">
+      <NameCon UId="52" Name="Done" />
+      <OpenCon UId="70" />
+    </Wire>
+    <Wire UId="98">
+      <NameCon UId="52" Name="Busy" />
+      <OpenCon UId="71" />
+    </Wire>
+    <Wire UId="99">
+      <NameCon UId="52" Name="Error" />
+      <OpenCon UId="72" />
+    </Wire>
+    <Wire UId="100">
+      <NameCon UId="52" Name="Status" />
+      <OpenCon UId="73" />
+    </Wire>
+    <Wire UId="101">
+      <IdentCon UId="26" />
+      <NameCon UId="54" Name="operand" />
+    </Wire>
+    <Wire UId="102">
+      <NameCon UId="54" Name="out" />
+      <NameCon UId="55" Name="en" />
+    </Wire>
+    <Wire UId="103">
+      <IdentCon UId="27" />
+      <NameCon UId="55" Name="IN" />
+    </Wire>
+    <Wire UId="104">
+      <IdentCon UId="28" />
+      <NameCon UId="55" Name="N" />
+    </Wire>
+    <Wire UId="105">
+      <NameCon UId="55" Name="RET_VAL" />
+      <IdentCon UId="29" />
+    </Wire>
+    <Wire UId="106">
+      <NameCon UId="55" Name="OUT" />
+      <IdentCon UId="30" />
+    </Wire>
+    <Wire UId="107">
+      <IdentCon UId="31" />
+      <NameCon UId="56" Name="Scope" />
+    </Wire>
+    <Wire UId="108">
+      <OpenCon UId="74" />
+      <NameCon UId="56" Name="Range" />
+    </Wire>
+    <Wire UId="109">
+      <OpenCon UId="75" />
+      <NameCon UId="56" Name="Subrange" />
+    </Wire>
+    <Wire UId="110">
+      <IdentCon UId="32" />
+      <NameCon UId="56" Name="Checksum" />
+    </Wire>
+    <Wire UId="111">
+      <NameCon UId="56" Name="eno" />
+      <NameCon UId="58" Name="in" />
+    </Wire>
+    <Wire UId="112">
+      <NameCon UId="56" Name="Done" />
+      <OpenCon UId="76" />
+    </Wire>
+    <Wire UId="113">
+      <NameCon UId="56" Name="Busy" />
+      <OpenCon UId="77" />
+    </Wire>
+    <Wire UId="114">
+      <NameCon UId="56" Name="Error" />
+      <OpenCon UId="78" />
+    </Wire>
+    <Wire UId="115">
+      <NameCon UId="56" Name="Status" />
+      <OpenCon UId="79" />
+    </Wire>
+    <Wire UId="116">
+      <IdentCon UId="33" />
+      <NameCon UId="58" Name="operand" />
+    </Wire>
+    <Wire UId="117">
+      <NameCon UId="58" Name="out" />
+      <NameCon UId="59" Name="en" />
+    </Wire>
+    <Wire UId="118">
+      <IdentCon UId="34" />
+      <NameCon UId="59" Name="IN" />
+    </Wire>
+    <Wire UId="119">
+      <IdentCon UId="35" />
+      <NameCon UId="59" Name="N" />
+    </Wire>
+    <Wire UId="120">
+      <NameCon UId="59" Name="RET_VAL" />
+      <IdentCon UId="36" />
+    </Wire>
+    <Wire UId="121">
+      <NameCon UId="59" Name="OUT" />
+      <IdentCon UId="37" />
+    </Wire>
+    <Wire UId="122">
+      <IdentCon UId="38" />
+      <NameCon UId="60" Name="Scope" />
+    </Wire>
+    <Wire UId="123">
+      <OpenCon UId="80" />
+      <NameCon UId="60" Name="Range" />
+    </Wire>
+    <Wire UId="124">
+      <OpenCon UId="81" />
+      <NameCon UId="60" Name="Subrange" />
+    </Wire>
+    <Wire UId="125">
+      <IdentCon UId="39" />
+      <NameCon UId="60" Name="Checksum" />
+    </Wire>
+    <Wire UId="126">
+      <NameCon UId="60" Name="eno" />
+      <NameCon UId="62" Name="in" />
+    </Wire>
+    <Wire UId="127">
+      <NameCon UId="60" Name="Done" />
+      <OpenCon UId="82" />
+    </Wire>
+    <Wire UId="128">
+      <NameCon UId="60" Name="Busy" />
+      <OpenCon UId="83" />
+    </Wire>
+    <Wire UId="129">
+      <NameCon UId="60" Name="Error" />
+      <OpenCon UId="84" />
+    </Wire>
+    <Wire UId="130">
+      <NameCon UId="60" Name="Status" />
+      <OpenCon UId="85" />
+    </Wire>
+    <Wire UId="131">
+      <IdentCon UId="40" />
+      <NameCon UId="62" Name="operand" />
+    </Wire>
+    <Wire UId="132">
+      <NameCon UId="62" Name="out" />
+      <NameCon UId="63" Name="en" />
+    </Wire>
+    <Wire UId="133">
+      <IdentCon UId="41" />
+      <NameCon UId="63" Name="IN" />
+    </Wire>
+    <Wire UId="134">
+      <IdentCon UId="42" />
+      <NameCon UId="63" Name="N" />
+    </Wire>
+    <Wire UId="135">
+      <NameCon UId="63" Name="RET_VAL" />
+      <IdentCon UId="43" />
+    </Wire>
+    <Wire UId="136">
+      <NameCon UId="63" Name="OUT" />
+      <IdentCon UId="44" />
+    </Wire>
+    <Wire UId="137">
+      <IdentCon UId="45" />
+      <NameCon UId="64" Name="operand" />
+    </Wire>
+    <Wire UId="138">
+      <NameCon UId="64" Name="out" />
+      <NameCon UId="65" Name="in" />
+    </Wire>
+    <Wire UId="139">
+      <IdentCon UId="46" />
+      <NameCon UId="65" Name="operand" />
+    </Wire>
+    <Wire UId="140">
+      <NameCon UId="65" Name="out" />
+      <NameCon UId="66" Name="in" />
+    </Wire>
+    <Wire UId="141">
+      <IdentCon UId="47" />
+      <NameCon UId="66" Name="operand" />
+    </Wire>
+    <Wire UId="142">
+      <NameCon UId="66" Name="out" />
+      <NameCon UId="67" Name="in" />
+    </Wire>
+    <Wire UId="143">
+      <IdentCon UId="48" />
+      <NameCon UId="67" Name="operand" />
+    </Wire>
+  </Wires>
+</FlgNet></NetworkSource>
+          <ProgrammingLanguage>LAD</ProgrammingLanguage>
+        </AttributeList>
+        <ObjectList>
+          <MultilingualText ID="2C" CompositionName="Comment">
+            <ObjectList>
+              <MultilingualTextItem ID="2D" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Read out checksum and convert it to string</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="2E" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Lesen der Prüfsumme und umwandeln in eine Stringvariable</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="2F" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="30" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="31" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="32" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="33" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+          <MultilingualText ID="34" CompositionName="Title">
+            <ObjectList>
+              <MultilingualTextItem ID="35" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Call "GetChecksum" and convert to string</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="36" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Aufruf "GetChecksum" und wandeln in String</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="37" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="38" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="39" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="3A" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="3B" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+        </ObjectList>
+      </SW.Blocks.CompileUnit>
+      <SW.Blocks.CompileUnit ID="3C" CompositionName="CompileUnits">
+        <AttributeList>
+          <NetworkSource><FlgNet xmlns="http://www.siemens.com/automation/Openness/SW/NetworkSource/FlgNet/v5">
+  <Parts>
+    <Access Scope="LocalVariable" UId="21">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumStandardOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="22">
+      <Constant>
+        <ConstantType>String</ConstantType>
+        <ConstantValue>''</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="23">
+      <Symbol>
+        <Component Name="statChecksumStandOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="24">
+      <Symbol>
+        <Component Name="statChecksumStandOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="25">
+      <Symbol>
+        <Component Name="dateTime" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="26">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="dateTimeStandardModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="27">
+      <Symbol>
+        <Component Name="statChecksumStandOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="28">
+      <Symbol>
+        <Component Name="ack" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="29">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="updateValuesOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="30">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="31">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumStandardOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="32">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumSafetyOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="33">
+      <Constant>
+        <ConstantType>String</ConstantType>
+        <ConstantValue>''</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="34">
+      <Symbol>
+        <Component Name="statChecksumSafeOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="35">
+      <Symbol>
+        <Component Name="statChecksumStandOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="36">
+      <Symbol>
+        <Component Name="dateTime" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="37">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="dateTimeSafetyModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="38">
+      <Symbol>
+        <Component Name="statChecksumSafeOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="39">
+      <Symbol>
+        <Component Name="ack" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="40">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="updateValuesOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="41">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumSafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="42">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumSafetyOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="43">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumTextlistsOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="44">
+      <Constant>
+        <ConstantType>String</ConstantType>
+        <ConstantValue>''</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="45">
+      <Symbol>
+        <Component Name="statChecksumTextlOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="46">
+      <Symbol>
+        <Component Name="statChecksumTextlOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="47">
+      <Symbol>
+        <Component Name="dateTime" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="48">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="dateTimeTextlistModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="49">
+      <Symbol>
+        <Component Name="statChecksumTextlOldNull" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="50">
+      <Symbol>
+        <Component Name="ack" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="51">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="updateValuesOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="52">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumTextlists" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="53">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumTextlistsOld" />
+      </Symbol>
+    </Access>
+    <Part Name="S_COMP" Version="1.1" UId="54">
+      <TemplateValue Name="relation" Type="Operation">EQ</TemplateValue>
+      <TemplateValue Name="src_type" Type="Type">String</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="55" />
+    <Part Name="Move" UId="56" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="57" />
+    <Part Name="Contact" UId="58" />
+    <Part Name="Contact" UId="59" />
+    <Part Name="O" UId="60">
+      <TemplateValue Name="Card" Type="Cardinality">3</TemplateValue>
+    </Part>
+    <Part Name="S_Move" UId="61" DisabledENO="true" />
+    <Part Name="S_COMP" Version="1.1" UId="62">
+      <TemplateValue Name="relation" Type="Operation">EQ</TemplateValue>
+      <TemplateValue Name="src_type" Type="Type">String</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="63" />
+    <Part Name="Move" UId="64" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="65" />
+    <Part Name="Contact" UId="66" />
+    <Part Name="Contact" UId="67" />
+    <Part Name="O" UId="68">
+      <TemplateValue Name="Card" Type="Cardinality">3</TemplateValue>
+    </Part>
+    <Part Name="S_Move" UId="69" DisabledENO="true" />
+    <Part Name="S_COMP" Version="1.1" UId="70">
+      <TemplateValue Name="relation" Type="Operation">EQ</TemplateValue>
+      <TemplateValue Name="src_type" Type="Type">String</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="71" />
+    <Part Name="Move" UId="72" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="73" />
+    <Part Name="Contact" UId="74" />
+    <Part Name="Contact" UId="75" />
+    <Part Name="O" UId="76">
+      <TemplateValue Name="Card" Type="Cardinality">3</TemplateValue>
+    </Part>
+    <Part Name="S_Move" UId="77" DisabledENO="true" />
+  </Parts>
+  <Wires>
+    <Wire UId="78">
+      <Powerrail />
+      <NameCon UId="54" Name="en" />
+      <NameCon UId="55" Name="in" />
+      <NameCon UId="57" Name="in" />
+      <NameCon UId="58" Name="in" />
+      <NameCon UId="59" Name="in" />
+      <NameCon UId="62" Name="en" />
+      <NameCon UId="63" Name="in" />
+      <NameCon UId="65" Name="in" />
+      <NameCon UId="66" Name="in" />
+      <NameCon UId="67" Name="in" />
+      <NameCon UId="70" Name="en" />
+      <NameCon UId="71" Name="in" />
+      <NameCon UId="73" Name="in" />
+      <NameCon UId="74" Name="in" />
+      <NameCon UId="75" Name="in" />
+    </Wire>
+    <Wire UId="79">
+      <IdentCon UId="21" />
+      <NameCon UId="54" Name="IN1" />
+    </Wire>
+    <Wire UId="80">
+      <IdentCon UId="22" />
+      <NameCon UId="54" Name="IN2" />
+    </Wire>
+    <Wire UId="81">
+      <NameCon UId="54" Name="OUT" />
+      <IdentCon UId="23" />
+    </Wire>
+    <Wire UId="82">
+      <IdentCon UId="24" />
+      <NameCon UId="55" Name="operand" />
+    </Wire>
+    <Wire UId="83">
+      <NameCon UId="55" Name="out" />
+      <NameCon UId="56" Name="en" />
+    </Wire>
+    <Wire UId="84">
+      <IdentCon UId="25" />
+      <NameCon UId="56" Name="in" />
+    </Wire>
+    <Wire UId="85">
+      <NameCon UId="56" Name="out1" />
+      <IdentCon UId="26" />
+    </Wire>
+    <Wire UId="86">
+      <IdentCon UId="27" />
+      <NameCon UId="57" Name="operand" />
+    </Wire>
+    <Wire UId="87">
+      <NameCon UId="57" Name="out" />
+      <NameCon UId="60" Name="in1" />
+    </Wire>
+    <Wire UId="88">
+      <IdentCon UId="28" />
+      <NameCon UId="58" Name="operand" />
+    </Wire>
+    <Wire UId="89">
+      <NameCon UId="58" Name="out" />
+      <NameCon UId="60" Name="in2" />
+    </Wire>
+    <Wire UId="90">
+      <IdentCon UId="29" />
+      <NameCon UId="59" Name="operand" />
+    </Wire>
+    <Wire UId="91">
+      <NameCon UId="59" Name="out" />
+      <NameCon UId="60" Name="in3" />
+    </Wire>
+    <Wire UId="92">
+      <NameCon UId="60" Name="out" />
+      <NameCon UId="61" Name="en" />
+    </Wire>
+    <Wire UId="93">
+      <IdentCon UId="30" />
+      <NameCon UId="61" Name="in" />
+    </Wire>
+    <Wire UId="94">
+      <NameCon UId="61" Name="out" />
+      <IdentCon UId="31" />
+    </Wire>
+    <Wire UId="95">
+      <IdentCon UId="32" />
+      <NameCon UId="62" Name="IN1" />
+    </Wire>
+    <Wire UId="96">
+      <IdentCon UId="33" />
+      <NameCon UId="62" Name="IN2" />
+    </Wire>
+    <Wire UId="97">
+      <NameCon UId="62" Name="OUT" />
+      <IdentCon UId="34" />
+    </Wire>
+    <Wire UId="98">
+      <IdentCon UId="35" />
+      <NameCon UId="63" Name="operand" />
+    </Wire>
+    <Wire UId="99">
+      <NameCon UId="63" Name="out" />
+      <NameCon UId="64" Name="en" />
+    </Wire>
+    <Wire UId="100">
+      <IdentCon UId="36" />
+      <NameCon UId="64" Name="in" />
+    </Wire>
+    <Wire UId="101">
+      <NameCon UId="64" Name="out1" />
+      <IdentCon UId="37" />
+    </Wire>
+    <Wire UId="102">
+      <IdentCon UId="38" />
+      <NameCon UId="65" Name="operand" />
+    </Wire>
+    <Wire UId="103">
+      <NameCon UId="65" Name="out" />
+      <NameCon UId="68" Name="in1" />
+    </Wire>
+    <Wire UId="104">
+      <IdentCon UId="39" />
+      <NameCon UId="66" Name="operand" />
+    </Wire>
+    <Wire UId="105">
+      <NameCon UId="66" Name="out" />
+      <NameCon UId="68" Name="in2" />
+    </Wire>
+    <Wire UId="106">
+      <IdentCon UId="40" />
+      <NameCon UId="67" Name="operand" />
+    </Wire>
+    <Wire UId="107">
+      <NameCon UId="67" Name="out" />
+      <NameCon UId="68" Name="in3" />
+    </Wire>
+    <Wire UId="108">
+      <NameCon UId="68" Name="out" />
+      <NameCon UId="69" Name="en" />
+    </Wire>
+    <Wire UId="109">
+      <IdentCon UId="41" />
+      <NameCon UId="69" Name="in" />
+    </Wire>
+    <Wire UId="110">
+      <NameCon UId="69" Name="out" />
+      <IdentCon UId="42" />
+    </Wire>
+    <Wire UId="111">
+      <IdentCon UId="43" />
+      <NameCon UId="70" Name="IN1" />
+    </Wire>
+    <Wire UId="112">
+      <IdentCon UId="44" />
+      <NameCon UId="70" Name="IN2" />
+    </Wire>
+    <Wire UId="113">
+      <NameCon UId="70" Name="OUT" />
+      <IdentCon UId="45" />
+    </Wire>
+    <Wire UId="114">
+      <IdentCon UId="46" />
+      <NameCon UId="71" Name="operand" />
+    </Wire>
+    <Wire UId="115">
+      <NameCon UId="71" Name="out" />
+      <NameCon UId="72" Name="en" />
+    </Wire>
+    <Wire UId="116">
+      <IdentCon UId="47" />
+      <NameCon UId="72" Name="in" />
+    </Wire>
+    <Wire UId="117">
+      <NameCon UId="72" Name="out1" />
+      <IdentCon UId="48" />
+    </Wire>
+    <Wire UId="118">
+      <IdentCon UId="49" />
+      <NameCon UId="73" Name="operand" />
+    </Wire>
+    <Wire UId="119">
+      <NameCon UId="73" Name="out" />
+      <NameCon UId="76" Name="in1" />
+    </Wire>
+    <Wire UId="120">
+      <IdentCon UId="50" />
+      <NameCon UId="74" Name="operand" />
+    </Wire>
+    <Wire UId="121">
+      <NameCon UId="74" Name="out" />
+      <NameCon UId="76" Name="in2" />
+    </Wire>
+    <Wire UId="122">
+      <IdentCon UId="51" />
+      <NameCon UId="75" Name="operand" />
+    </Wire>
+    <Wire UId="123">
+      <NameCon UId="75" Name="out" />
+      <NameCon UId="76" Name="in3" />
+    </Wire>
+    <Wire UId="124">
+      <NameCon UId="76" Name="out" />
+      <NameCon UId="77" Name="en" />
+    </Wire>
+    <Wire UId="125">
+      <IdentCon UId="52" />
+      <NameCon UId="77" Name="in" />
+    </Wire>
+    <Wire UId="126">
+      <NameCon UId="77" Name="out" />
+      <IdentCon UId="53" />
+    </Wire>
+  </Wires>
+</FlgNet></NetworkSource>
+          <ProgrammingLanguage>LAD</ProgrammingLanguage>
+        </AttributeList>
+        <ObjectList>
+          <MultilingualText ID="3D" CompositionName="Comment">
+            <ObjectList>
+              <MultilingualTextItem ID="3E" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Describe old value with current value if old value is still empty (eg. at restart) or if it has been acknowledged with ACK or #HMI.Update_Values_Old</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="3F" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Altwert mit aktuellem Wert beschreiben, falls Altwert noch leer (z.B. bei Neustart) oder wenn Quittiert wurde mit QUIT oder #HMI.Update_Values_Old</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="40" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="41" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="42" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="43" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="44" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+          <MultilingualText ID="45" CompositionName="Title">
+            <ObjectList>
+              <MultilingualTextItem ID="46" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Overwrite value-before with current-value</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="47" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Vorheriger Wert mit aktuellem Wert beschreiben</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="48" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="49" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="4A" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="4B" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="4C" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+        </ObjectList>
+      </SW.Blocks.CompileUnit>
+      <SW.Blocks.CompileUnit ID="4D" CompositionName="CompileUnits">
+        <AttributeList>
+          <NetworkSource><FlgNet xmlns="http://www.siemens.com/automation/Openness/SW/NetworkSource/FlgNet/v5">
+  <Parts>
+    <Access Scope="LocalVariable" UId="21">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="22">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumStandardOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="23">
+      <Symbol>
+        <Component Name="statChecksumStandDiff" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="24">
+      <Symbol>
+        <Component Name="statChecksumStandDiff" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="25">
+      <Symbol>
+        <Component Name="hideMessageStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="26">
+      <Symbol>
+        <Component Name="statMessageStandModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="27">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="standardModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="28">
+      <Symbol>
+        <Component Name="statRisEdgeDiff" />
+        <Component Name="standard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="29">
+      <Symbol>
+        <Component Name="dateTime" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="30">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="dateTimeStandardModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="31">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumSafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="32">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumSafetyOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="33">
+      <Symbol>
+        <Component Name="statChecksumSafeDiff" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="34">
+      <Symbol>
+        <Component Name="statChecksumSafeDiff" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="35">
+      <Symbol>
+        <Component Name="hideMessageSafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="36">
+      <Symbol>
+        <Component Name="statMessageSafeModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="37">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="safetyModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="38">
+      <Symbol>
+        <Component Name="statRisEdgeDiff" />
+        <Component Name="safety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="39">
+      <Symbol>
+        <Component Name="dateTime" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="40">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="dateTimeSafetyModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="41">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumTextlists" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="42">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="checksumTextlistsOld" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="43">
+      <Symbol>
+        <Component Name="statChecksumTextlDiff" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="44">
+      <Symbol>
+        <Component Name="statChecksumTextlDiff" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="45">
+      <Symbol>
+        <Component Name="hideMessageTextlist" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="46">
+      <Symbol>
+        <Component Name="statMessageTextlModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="47">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="textlistsModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="48">
+      <Symbol>
+        <Component Name="statRisEdgeDiff" />
+        <Component Name="textlists" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="49">
+      <Symbol>
+        <Component Name="dateTime" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="50">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="dateTimeTextlistModified" />
+      </Symbol>
+    </Access>
+    <Part Name="S_COMP" Version="1.1" UId="51">
+      <TemplateValue Name="relation" Type="Operation">NE</TemplateValue>
+      <TemplateValue Name="src_type" Type="Type">String</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="52" />
+    <Part Name="Contact" UId="53">
+      <Negated Name="operand" />
+    </Part>
+    <Part Name="Coil" UId="54" />
+    <Part Name="Coil" UId="55" />
+    <Part Name="PBox" UId="56" />
+    <Part Name="Move" UId="57" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+    <Part Name="S_COMP" Version="1.1" UId="58">
+      <TemplateValue Name="relation" Type="Operation">NE</TemplateValue>
+      <TemplateValue Name="src_type" Type="Type">String</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="59" />
+    <Part Name="Contact" UId="60">
+      <Negated Name="operand" />
+    </Part>
+    <Part Name="Coil" UId="61" />
+    <Part Name="Coil" UId="62" />
+    <Part Name="PBox" UId="63" />
+    <Part Name="Move" UId="64" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+    <Part Name="S_COMP" Version="1.1" UId="65">
+      <TemplateValue Name="relation" Type="Operation">NE</TemplateValue>
+      <TemplateValue Name="src_type" Type="Type">String</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="66" />
+    <Part Name="Contact" UId="67">
+      <Negated Name="operand" />
+    </Part>
+    <Part Name="Coil" UId="68" />
+    <Part Name="Coil" UId="69" />
+    <Part Name="PBox" UId="70" />
+    <Part Name="Move" UId="71" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+  </Parts>
+  <Wires>
+    <Wire UId="72">
+      <Powerrail />
+      <NameCon UId="51" Name="en" />
+      <NameCon UId="52" Name="in" />
+      <NameCon UId="58" Name="en" />
+      <NameCon UId="59" Name="in" />
+      <NameCon UId="65" Name="en" />
+      <NameCon UId="66" Name="in" />
+    </Wire>
+    <Wire UId="73">
+      <IdentCon UId="21" />
+      <NameCon UId="51" Name="IN1" />
+    </Wire>
+    <Wire UId="74">
+      <IdentCon UId="22" />
+      <NameCon UId="51" Name="IN2" />
+    </Wire>
+    <Wire UId="75">
+      <NameCon UId="51" Name="OUT" />
+      <IdentCon UId="23" />
+    </Wire>
+    <Wire UId="76">
+      <IdentCon UId="24" />
+      <NameCon UId="52" Name="operand" />
+    </Wire>
+    <Wire UId="77">
+      <NameCon UId="52" Name="out" />
+      <NameCon UId="53" Name="in" />
+      <NameCon UId="55" Name="in" />
+      <NameCon UId="56" Name="in" />
+    </Wire>
+    <Wire UId="78">
+      <IdentCon UId="25" />
+      <NameCon UId="53" Name="operand" />
+    </Wire>
+    <Wire UId="79">
+      <NameCon UId="53" Name="out" />
+      <NameCon UId="54" Name="in" />
+    </Wire>
+    <Wire UId="80">
+      <IdentCon UId="26" />
+      <NameCon UId="54" Name="operand" />
+    </Wire>
+    <Wire UId="81">
+      <IdentCon UId="27" />
+      <NameCon UId="55" Name="operand" />
+    </Wire>
+    <Wire UId="82">
+      <IdentCon UId="28" />
+      <NameCon UId="56" Name="bit" />
+    </Wire>
+    <Wire UId="83">
+      <NameCon UId="56" Name="out" />
+      <NameCon UId="57" Name="en" />
+    </Wire>
+    <Wire UId="84">
+      <IdentCon UId="29" />
+      <NameCon UId="57" Name="in" />
+    </Wire>
+    <Wire UId="85">
+      <NameCon UId="57" Name="out1" />
+      <IdentCon UId="30" />
+    </Wire>
+    <Wire UId="86">
+      <IdentCon UId="31" />
+      <NameCon UId="58" Name="IN1" />
+    </Wire>
+    <Wire UId="87">
+      <IdentCon UId="32" />
+      <NameCon UId="58" Name="IN2" />
+    </Wire>
+    <Wire UId="88">
+      <NameCon UId="58" Name="OUT" />
+      <IdentCon UId="33" />
+    </Wire>
+    <Wire UId="89">
+      <IdentCon UId="34" />
+      <NameCon UId="59" Name="operand" />
+    </Wire>
+    <Wire UId="90">
+      <NameCon UId="59" Name="out" />
+      <NameCon UId="60" Name="in" />
+      <NameCon UId="62" Name="in" />
+      <NameCon UId="63" Name="in" />
+    </Wire>
+    <Wire UId="91">
+      <IdentCon UId="35" />
+      <NameCon UId="60" Name="operand" />
+    </Wire>
+    <Wire UId="92">
+      <NameCon UId="60" Name="out" />
+      <NameCon UId="61" Name="in" />
+    </Wire>
+    <Wire UId="93">
+      <IdentCon UId="36" />
+      <NameCon UId="61" Name="operand" />
+    </Wire>
+    <Wire UId="94">
+      <IdentCon UId="37" />
+      <NameCon UId="62" Name="operand" />
+    </Wire>
+    <Wire UId="95">
+      <IdentCon UId="38" />
+      <NameCon UId="63" Name="bit" />
+    </Wire>
+    <Wire UId="96">
+      <NameCon UId="63" Name="out" />
+      <NameCon UId="64" Name="en" />
+    </Wire>
+    <Wire UId="97">
+      <IdentCon UId="39" />
+      <NameCon UId="64" Name="in" />
+    </Wire>
+    <Wire UId="98">
+      <NameCon UId="64" Name="out1" />
+      <IdentCon UId="40" />
+    </Wire>
+    <Wire UId="99">
+      <IdentCon UId="41" />
+      <NameCon UId="65" Name="IN1" />
+    </Wire>
+    <Wire UId="100">
+      <IdentCon UId="42" />
+      <NameCon UId="65" Name="IN2" />
+    </Wire>
+    <Wire UId="101">
+      <NameCon UId="65" Name="OUT" />
+      <IdentCon UId="43" />
+    </Wire>
+    <Wire UId="102">
+      <IdentCon UId="44" />
+      <NameCon UId="66" Name="operand" />
+    </Wire>
+    <Wire UId="103">
+      <NameCon UId="66" Name="out" />
+      <NameCon UId="67" Name="in" />
+      <NameCon UId="69" Name="in" />
+      <NameCon UId="70" Name="in" />
+    </Wire>
+    <Wire UId="104">
+      <IdentCon UId="45" />
+      <NameCon UId="67" Name="operand" />
+    </Wire>
+    <Wire UId="105">
+      <NameCon UId="67" Name="out" />
+      <NameCon UId="68" Name="in" />
+    </Wire>
+    <Wire UId="106">
+      <IdentCon UId="46" />
+      <NameCon UId="68" Name="operand" />
+    </Wire>
+    <Wire UId="107">
+      <IdentCon UId="47" />
+      <NameCon UId="69" Name="operand" />
+    </Wire>
+    <Wire UId="108">
+      <IdentCon UId="48" />
+      <NameCon UId="70" Name="bit" />
+    </Wire>
+    <Wire UId="109">
+      <NameCon UId="70" Name="out" />
+      <NameCon UId="71" Name="en" />
+    </Wire>
+    <Wire UId="110">
+      <IdentCon UId="49" />
+      <NameCon UId="71" Name="in" />
+    </Wire>
+    <Wire UId="111">
+      <NameCon UId="71" Name="out1" />
+      <IdentCon UId="50" />
+    </Wire>
+  </Wires>
+</FlgNet></NetworkSource>
+          <ProgrammingLanguage>LAD</ProgrammingLanguage>
+        </AttributeList>
+        <ObjectList>
+          <MultilingualText ID="4E" CompositionName="Comment">
+            <ObjectList>
+              <MultilingualTextItem ID="4F" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Generate ProDiag message only if it is not deselected (HIDE ... = 0)
+In the screen always mark the difference in color, by #HMI ... Modified</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="50" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>ProDiag-Meldung nur generieren, wenn sie nicht abgewählt ist (HIDE... = 0)
+Im Bild den Unterschied immer farblich markieren, durch #HMI...Modified</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="51" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="52" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="53" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="54" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="55" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+          <MultilingualText ID="56" CompositionName="Title">
+            <ObjectList>
+              <MultilingualTextItem ID="57" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Message: Standard blocks are modified</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="58" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Meldung: Standard Bausteine wurden modifiziert</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="59" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="5A" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="5B" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="5C" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="5D" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+        </ObjectList>
+      </SW.Blocks.CompileUnit>
+      <SW.Blocks.CompileUnit ID="5E" CompositionName="CompileUnits">
+        <AttributeList>
+          <NetworkSource><FlgNet xmlns="http://www.siemens.com/automation/Openness/SW/NetworkSource/FlgNet/v5">
+  <Parts>
+    <Access Scope="LocalVariable" UId="21">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="standardModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="22">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="safetyModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="23">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="textlistsModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="24">
+      <Symbol>
+        <Component Name="generalMessage" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="25">
+      <Symbol>
+        <Component Name="checksumHmi" />
+        <Component Name="summaryModified" />
+      </Symbol>
+    </Access>
+    <Part Name="Contact" UId="26" />
+    <Part Name="Contact" UId="27" />
+    <Part Name="Contact" UId="28" />
+    <Part Name="O" UId="29">
+      <TemplateValue Name="Card" Type="Cardinality">3</TemplateValue>
+    </Part>
+    <Part Name="Coil" UId="30" />
+    <Part Name="Coil" UId="31" />
+  </Parts>
+  <Wires>
+    <Wire UId="32">
+      <Powerrail />
+      <NameCon UId="26" Name="in" />
+      <NameCon UId="27" Name="in" />
+      <NameCon UId="28" Name="in" />
+    </Wire>
+    <Wire UId="33">
+      <IdentCon UId="21" />
+      <NameCon UId="26" Name="operand" />
+    </Wire>
+    <Wire UId="34">
+      <NameCon UId="26" Name="out" />
+      <NameCon UId="29" Name="in1" />
+    </Wire>
+    <Wire UId="35">
+      <IdentCon UId="22" />
+      <NameCon UId="27" Name="operand" />
+    </Wire>
+    <Wire UId="36">
+      <NameCon UId="27" Name="out" />
+      <NameCon UId="29" Name="in2" />
+    </Wire>
+    <Wire UId="37">
+      <IdentCon UId="23" />
+      <NameCon UId="28" Name="operand" />
+    </Wire>
+    <Wire UId="38">
+      <NameCon UId="28" Name="out" />
+      <NameCon UId="29" Name="in3" />
+    </Wire>
+    <Wire UId="39">
+      <NameCon UId="29" Name="out" />
+      <NameCon UId="30" Name="in" />
+      <NameCon UId="31" Name="in" />
+    </Wire>
+    <Wire UId="40">
+      <IdentCon UId="24" />
+      <NameCon UId="30" Name="operand" />
+    </Wire>
+    <Wire UId="41">
+      <IdentCon UId="25" />
+      <NameCon UId="31" Name="operand" />
+    </Wire>
+  </Wires>
+</FlgNet></NetworkSource>
+          <ProgrammingLanguage>LAD</ProgrammingLanguage>
+        </AttributeList>
+        <ObjectList>
+          <MultilingualText ID="5F" CompositionName="Comment">
+            <ObjectList>
+              <MultilingualTextItem ID="60" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Generate message if checksum is changed</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="61" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Erstellen einer Meldung wenn die Prüfsumme geänder wird</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="62" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="63" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="64" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="65" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="66" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+          <MultilingualText ID="67" CompositionName="Title">
+            <ObjectList>
+              <MultilingualTextItem ID="68" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>General messages</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="69" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Sammelmeldungen</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="6A" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="6B" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="6C" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="6D" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="6E" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+        </ObjectList>
+      </SW.Blocks.CompileUnit>
+      <SW.Blocks.CompileUnit ID="6F" CompositionName="CompileUnits">
+        <AttributeList>
+          <NetworkSource><FlgNet xmlns="http://www.siemens.com/automation/Openness/SW/NetworkSource/FlgNet/v5">
+  <Parts>
+    <Access Scope="LiteralConstant" UId="21">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>99</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="22">
+      <Symbol>
+        <Component Name="statWarnNoStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="23">
+      <Symbol>
+        <Component Name="statWarnNoSafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="24">
+      <Symbol>
+        <Component Name="statWarnNoTextlist" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="25">
+      <Symbol>
+        <Component Name="statMessageStandModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="26">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>0</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="27">
+      <Symbol>
+        <Component Name="statWarnNoStandard" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="28">
+      <Symbol>
+        <Component Name="statMessageSafeModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="29">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>1</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="30">
+      <Symbol>
+        <Component Name="statWarnNoSafety" />
+      </Symbol>
+    </Access>
+    <Access Scope="LocalVariable" UId="31">
+      <Symbol>
+        <Component Name="statMessageTextlModified" />
+      </Symbol>
+    </Access>
+    <Access Scope="LiteralConstant" UId="32">
+      <Constant>
+        <ConstantType>UInt</ConstantType>
+        <ConstantValue>2</ConstantValue>
+      </Constant>
+    </Access>
+    <Access Scope="LocalVariable" UId="33">
+      <Symbol>
+        <Component Name="statWarnNoTextlist" />
+      </Symbol>
+    </Access>
+    <Part Name="Move" UId="34" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">3</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="35" />
+    <Part Name="Move" UId="36" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="37" />
+    <Part Name="Move" UId="38" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+    <Part Name="Contact" UId="39" />
+    <Part Name="Move" UId="40" DisabledENO="true">
+      <TemplateValue Name="Card" Type="Cardinality">1</TemplateValue>
+    </Part>
+  </Parts>
+  <Wires>
+    <Wire UId="41">
+      <Powerrail />
+      <NameCon UId="34" Name="en" />
+      <NameCon UId="35" Name="in" />
+      <NameCon UId="37" Name="in" />
+      <NameCon UId="39" Name="in" />
+    </Wire>
+    <Wire UId="42">
+      <IdentCon UId="21" />
+      <NameCon UId="34" Name="in" />
+    </Wire>
+    <Wire UId="43">
+      <NameCon UId="34" Name="out1" />
+      <IdentCon UId="22" />
+    </Wire>
+    <Wire UId="44">
+      <NameCon UId="34" Name="out2" />
+      <IdentCon UId="23" />
+    </Wire>
+    <Wire UId="45">
+      <NameCon UId="34" Name="out3" />
+      <IdentCon UId="24" />
+    </Wire>
+    <Wire UId="46">
+      <IdentCon UId="25" />
+      <NameCon UId="35" Name="operand" />
+    </Wire>
+    <Wire UId="47">
+      <NameCon UId="35" Name="out" />
+      <NameCon UId="36" Name="en" />
+    </Wire>
+    <Wire UId="48">
+      <IdentCon UId="26" />
+      <NameCon UId="36" Name="in" />
+    </Wire>
+    <Wire UId="49">
+      <NameCon UId="36" Name="out1" />
+      <IdentCon UId="27" />
+    </Wire>
+    <Wire UId="50">
+      <IdentCon UId="28" />
+      <NameCon UId="37" Name="operand" />
+    </Wire>
+    <Wire UId="51">
+      <NameCon UId="37" Name="out" />
+      <NameCon UId="38" Name="en" />
+    </Wire>
+    <Wire UId="52">
+      <IdentCon UId="29" />
+      <NameCon UId="38" Name="in" />
+    </Wire>
+    <Wire UId="53">
+      <NameCon UId="38" Name="out1" />
+      <IdentCon UId="30" />
+    </Wire>
+    <Wire UId="54">
+      <IdentCon UId="31" />
+      <NameCon UId="39" Name="operand" />
+    </Wire>
+    <Wire UId="55">
+      <NameCon UId="39" Name="out" />
+      <NameCon UId="40" Name="en" />
+    </Wire>
+    <Wire UId="56">
+      <IdentCon UId="32" />
+      <NameCon UId="40" Name="in" />
+    </Wire>
+    <Wire UId="57">
+      <NameCon UId="40" Name="out1" />
+      <IdentCon UId="33" />
+    </Wire>
+  </Wires>
+</FlgNet></NetworkSource>
+          <ProgrammingLanguage>LAD</ProgrammingLanguage>
+        </AttributeList>
+        <ObjectList>
+          <MultilingualText ID="70" CompositionName="Comment">
+            <ObjectList>
+              <MultilingualTextItem ID="71" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>Assign the alarms, warnings and informations to ProDiag</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="72" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>Zuweisen der Alarme, Warnungen und Informationen an ProDiag</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="73" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="74" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="75" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="76" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="77" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+          <MultilingualText ID="78" CompositionName="Title">
+            <ObjectList>
+              <MultilingualTextItem ID="79" CompositionName="Items">
+                <AttributeList>
+                  <Culture>en-US</Culture>
+                  <Text>HMI: Assignment PLC alarm text list </Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="7A" CompositionName="Items">
+                <AttributeList>
+                  <Culture>de-DE</Culture>
+                  <Text>HMI: Zuweisungen PLC -Meldetextlisten</Text>
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="7B" CompositionName="Items">
+                <AttributeList>
+                  <Culture>fr-FR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="7C" CompositionName="Items">
+                <AttributeList>
+                  <Culture>it-IT</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="7D" CompositionName="Items">
+                <AttributeList>
+                  <Culture>es-ES</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="7E" CompositionName="Items">
+                <AttributeList>
+                  <Culture>ko-KR</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+              <MultilingualTextItem ID="7F" CompositionName="Items">
+                <AttributeList>
+                  <Culture>zh-CN</Culture>
+                  <Text />
+                </AttributeList>
+              </MultilingualTextItem>
+            </ObjectList>
+          </MultilingualText>
+        </ObjectList>
+      </SW.Blocks.CompileUnit>
+      <MultilingualText ID="80" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="81" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>LAF_Checksum</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="82" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text>PLC checksum mit ProDiag</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="83" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="84" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="85" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="86" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="87" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Blocks.FB>
+</Document>

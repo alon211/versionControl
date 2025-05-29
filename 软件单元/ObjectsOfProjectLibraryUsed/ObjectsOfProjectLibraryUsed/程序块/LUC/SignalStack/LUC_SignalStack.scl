@@ -1,0 +1,381 @@
+﻿FUNCTION_BLOCK "LUC_SignalStack"
+TITLE = LUC_SignalStack
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+VERSION : 1.2
+//This block represents a Signal Stack object, to set the signal stack outputs according to the current global Unit state from the `LUC_ModeStateManager`.
+   VAR_INPUT 
+      currentState : DInt;   // Current state of the unit
+      freqClockBit { S7_HiddenAssignment := 'HideIfNoParamAssigned'} : Bool;   // Signal with specified frequency for any light of the stack
+      disableHorn { S7_HiddenAssignment := 'HideIfNoParamAssigned'} : Bool;   // Disable Horn
+      hornPulseTime { S7_HiddenAssignment := 'HideIfNoParamAssigned'} : Time;   // Horn Pulse time - the Horn is turned on as long the pulse time is not expired. If the time is set to t#0s, continuous horn sound can be achieved.
+      processBypass { S7_HiddenAssignment := 'HideIfNoParamAssigned'} : "LUC_typeSignalStackStateBehaviour";   // Bypass for diectly setting the signals in the SignalStack, concate the configuration with OR 
+      configuration { S7_HiddenAssignment := 'Show'} : "LUC_typeSignalStackConfiguration";
+   END_VAR
+
+   VAR_OUTPUT 
+      lightsByBool { ExternalWritable := 'False'} : "LUC_typeSignalStackByStatus";
+      lightsByDint { ExternalWritable := 'False'} : "LUC_typeSignalStackByDInt";
+      lightsByDWord { ExternalWritable := 'False'} : "LUC_typeSignalStackByDWord";
+      lightsStatus { ExternalWritable := 'False'} : "LUC_typeSignalStackByBool";
+   END_VAR
+
+   VAR 
+      instPulseHorn {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : IEC_TIMER := ((), T#1s, (), (), (), ());   // Generates a signal with a specified time-length
+   END_VAR
+
+   VAR_TEMP 
+      tempSignalStack : "LUC_typeSignalStackStateBehaviour";   // Temp tag to work on the SignalStack values
+      tempSignalStackBehavior : "LUC_typeSignalStackConfiguration";   // Temp tag to store the SignalStack behavior along to the active machine mode
+      tempLightsByBool : "LUC_typeSignalStackByStatus";   // Temp Stack light signals boolean
+      tempLightByDint : "LUC_typeSignalStackByDInt";   // Temp Stack Light Signals DInt
+      tempLightsByWord : "LUC_typeSignalStackByDWord";   // Temp Stack Light Signals DWord
+      tempLightsStatus : "LUC_typeSignalStackByBool";
+      tempCmdDiseableHorn : Bool;
+   END_VAR
+
+   VAR CONSTANT 
+      MACHINE_STATE_COMPLETE : DInt := 17;
+      OFF : USInt := 1;   // Signal is OFF (mainly used for the MES Type states)
+      ON_STATIC_SOLID : USInt := 2;   // Signal is ON statically (mainly used for the MES Type states)
+      ON_PERIODICALLY_FLASHING : USInt := 3;   // Signal is ON perodically / flashing (mainly used for the MES Type states)
+      TIME_0_SECONDS : Time;   // Time constant of 0 seconds (Used for generating a static horn output)
+      LPMLV2022_STATE_UNDEFINED : DInt := 0;   // State machine : Undefined
+      LPMLV2022_STATE_CLEARING : DInt := 1;   // State Machine : Clearing
+      LPMLV2022_STATE_STOPPED : DInt := 2;   // State Machine : Stopped
+      LPMLV2022_STATE_STARTING : DInt := 3;   // State Machine : Starting
+      LPMLV2022_STATE_IDLE : DInt := 4;   // State Machine : Idle
+      LPMLV2022_STATE_SUSPENDED : DInt := 5;   // State Machine : Suspended
+      LPMLV2022_STATE_EXECUTE : DInt := 6;   // State Machine : Excecute
+      LPMLV2022_STATE_STOPPING : DInt := 7;   // State Machine : Stopping
+      LPMLV2022_STATE_ABORTING : DInt := 8;   // State Machine : Aborting
+      LPMLV2022_STATE_ABORTED : DInt := 9;   // State Machine : Aborted
+      LPMLV2022_STATE_HOLDING : DInt := 10;   // State Machine : Holding
+      LPMLV2022_STATE_HELD : DInt := 11;   // State Machine : Held
+      LPMLV2022_STATE_UNHOLDING : DInt := 12;   // State Machine : Unholding
+      LPMLV2022_STATE_SUSPENDING : DInt := 13;   // State Machine : Suspending
+      LPMLV2022_STATE_UNSUSPENDING : DInt := 14;   // State Machine : Unsuspending
+      LPMLV2022_STATE_RESETTING : DInt := 15;   // State Machine : Resetting
+      LPMLV2022_STATE_COMPLETING : DInt := 16;   // State Machine : Completing
+      LPMLV2022_STATE_COMPLETED : DInt := 17;   // State Machine : Completed
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2024
+	    //-------------------------------------------------------------------------------
+	    // Title:            LUC_SignalStack
+	    // Comment/Function: This block represents a Signal Stack object, to set the signal stack outputs according to the
+	    //                   current global Unit state from the `LUC_InterfaceManager`.
+	    // Library/Family:   LUC - Library of Unit Controls
+	    // Author:           Siemens Digital Industries
+	    // Tested with:      S7-PLCSIM Advanced 6.0
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     -
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	    // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | Implemented 4 different ways to monitor Stack lights and horn (lightsByBool, lightsByDint, lightsByDWord and lightsStatus)
+	    // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Optimized code.
+	    //===============================================================================  
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION 
+	(/*
+	#### How to use the LUC_SignalStack block in your application
+	  To use the block, you must choose the type of block instantiation fitting to your application. 
+	  In most applications, the block will be called as a multi-instance. 
+	  Once instantiated, inputs, inOuts and outputs should be connected, so that the block can
+	  interact with the rest of your automation solution.
+	  In the following picture, an example of the block call is shown.
+	
+	![LUC_SignalStack_BlockCall_Ref](LUC_SignalStack_BlockCall_Ref.png "LUC_SignalStack block call")
+	
+	  The picture shows the following variables of the interface:
+	
+	1. The _current state_ of the unit.
+	
+	2. The _freqClockBit_ input is a boolean signal with a user defined frequency to make a Stack Light or Horn flash.
+	
+	3. The _hornPulseTime_ of the Stack Light. 
+	
+	4. The _hornPulseTime_ input is the duration of the pulse of the horn. If time is T#0s,the horn would have a continuous sound.
+	
+	5. The _processBypass_ input. It allows you to bypass the block configuration and set the lights and horn statically/flashing ON and OFF regardless of the production state of the unit.  
+	
+	6. The configuration input. It provides the functionality of selecting which light/horn is going to be ON/OFF or FLASHING for each state of the unit. typically, a global DB for configuration is connected here.
+	  More details about the configuration possibilities are described in the section below (Structure of LUC_StackLight configuration).
+	
+	7. The horn/light outputs. They provide an unstructured way of connecting the signal stack periphery to the block.
+	  The output logic is boolean and monitors the different status that each light or horn could be in. 
+	  For a structured way of connection, by means of a UDT, use object number 6, described below. 
+	
+	8. The horn/light outputs. They provide an unstructured way of connecting the signal stack periphery to the block.
+	  The output logic is DInt and monitors the different status that each light or horn could be in.   
+	  For a structured way of connection, by means of a UDT, use object number 6, described below. 
+	
+	+----------------+-----------+-----------+------------+
+	| LightsByDint   | Value = 1 | Value = 2 | Value = 3 
+	+================+===========+===========+============+
+	| Red            |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| Yellow         |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| Blue           |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| Blue           |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| Green          |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| Horn           |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| White          |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| User 1         |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	| User 2         |   Off     |   On      |  Flashing 
+	+----------------+-----------+-----------+------------+
+	
+	
+	9. The horn/light outputs. They provide an unstructured way of connecting the signal stack periphery to the block.
+	The output logic is a DWord and monitors the different status that each light or horn could be in. Each bit refers to a different status of the lights.
+	For a structured way of connection, by means of a UDT, use object number 6, described below.
+	
+	+----------------+-----------------+
+	| Bit Position   | Meaning
+	+================+=================+
+	| 0              | Red solid
+	+----------------+-----------------+
+	| 1              | Red flashing
+	+----------------+-----------------+
+	| 2              | Yellow solid
+	+----------------+-----------------+
+	| 3              | Yellow flashing
+	+----------------+-----------------+
+	| 4              | Blue solid
+	+----------------+-----------------+
+	| 5              | Blue flashing
+	+----------------+-----------------+
+	| 6              | Green solid 
+	+----------------+-----------------+
+	| 7              | Green flashing
+	+----------------+-----------------+
+	| 8              | Horn solid
+	+----------------+-----------------+
+	| 9              | Horn flashing
+	+----------------+-----------------+
+	| 10             | White solid
+	+----------------+-----------------+
+	| 11             | White flashing
+	+----------------+-----------------+
+	| 12..31         | User Defined
+	+----------------+-----------------+
+	
+	10. The stackConnectPeriphery output. It provides a structure to connect the lighstack and horn periphery.
+	  The output logic is boolean. 
+	
+	'__Structure of LUC_StackLight configuration__' 
+	
+	In the following picture, a visual representation of the configuration structure is shown.
+	
+	![LUC_SignalStack_ConfigStates](LUC_SignalStack_ConfigStates.png "LUC_SignalStack configuration states overview")
+	
+	According to each state of OMAC model, the user can configure the light and horn behavior.
+	They can be configured as OFF, ON, FLASHING. If the user needs also a different configuration for the different Unit production modes 
+	(Production, Maintenance, Manual, etc.) use the LUC_SignalStackExtended block.
+	
+	![LUC_SignalStack_ConfigStates_Expanded](LUC_SignalStack_ConfigStates_Expanded.png "LUC_SignalStack configuration states detail")
+	
+	'__Connection with HMI interface__'
+	
+	See chapter 6.5. Signal stack. 
+	*/)
+	END_REGION DESCRIPTION
+	
+	REGION PROCESSING
+	    // Light pattern is dependent on the unit states
+	    
+	    REGION Get signal stack behavior for active machine mode
+	        #tempSignalStackBehavior := #configuration;
+	    END_REGION Get signal stack behavior for active machine mode
+	    
+	    // Follows a standardized "MachineSupplierTechnicalGuideline"
+	    REGION Get signal stack output behavior
+	        CASE #currentState OF
+	            #LPMLV2022_STATE_CLEARING:
+	                #tempSignalStack := #tempSignalStackBehavior.clearing;
+	            #LPMLV2022_STATE_STOPPED:
+	                #tempSignalStack := #tempSignalStackBehavior.stopped;
+	            #LPMLV2022_STATE_STARTING:
+	                #tempSignalStack := #tempSignalStackBehavior.starting;
+	            #LPMLV2022_STATE_IDLE:
+	                #tempSignalStack := #tempSignalStackBehavior.idle;
+	            #LPMLV2022_STATE_SUSPENDED:
+	                #tempSignalStack := #tempSignalStackBehavior.suspended;
+	            #LPMLV2022_STATE_EXECUTE:
+	                #tempSignalStack := #tempSignalStackBehavior.execute;
+	            #LPMLV2022_STATE_STOPPING:
+	                #tempSignalStack := #tempSignalStackBehavior.stopping;
+	            #LPMLV2022_STATE_ABORTING:
+	                #tempSignalStack := #tempSignalStackBehavior.aborting;
+	            #LPMLV2022_STATE_ABORTED:
+	                #tempSignalStack := #tempSignalStackBehavior.aborted;
+	            #LPMLV2022_STATE_HOLDING:
+	                #tempSignalStack := #tempSignalStackBehavior.holding;
+	            #LPMLV2022_STATE_HELD:
+	                #tempSignalStack := #tempSignalStackBehavior.held;
+	            #LPMLV2022_STATE_UNHOLDING:
+	                #tempSignalStack := #tempSignalStackBehavior.unholding;
+	            #LPMLV2022_STATE_SUSPENDING:
+	                #tempSignalStack := #tempSignalStackBehavior.suspending;
+	            #LPMLV2022_STATE_UNSUSPENDING:
+	                #tempSignalStack := #tempSignalStackBehavior.unsuspending;
+	            #LPMLV2022_STATE_RESETTING:
+	                #tempSignalStack := #tempSignalStackBehavior.resetting;
+	            #LPMLV2022_STATE_COMPLETING:
+	                #tempSignalStack := #tempSignalStackBehavior.completing;
+	            #MACHINE_STATE_COMPLETE:
+	                #tempSignalStack := #tempSignalStackBehavior.completed;
+	            #LPMLV2022_STATE_UNDEFINED:
+	                #tempSignalStack := #tempSignalStackBehavior.undefined;
+	            ELSE
+	                #tempSignalStack := #tempSignalStackBehavior.undefined;
+	        END_CASE;
+	    END_REGION Get signal stack output behavior
+	    
+	    REGION Set signal stack output pattern
+	        // Horn OUT-logic
+	        #instPulseHorn.TP(IN := #tempSignalStack.static.#horn,
+	                          PT := #hornPulseTime);
+	        
+	        REGION Output logic DInt      
+	            // RED
+	            IF #tempSignalStack.flashing.red OR #processBypass.flashing.red THEN
+	                #tempLightByDint.red := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #tempSignalStack.static.red OR #processBypass.static.red THEN
+	                #tempLightByDint.red := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.red := #OFF;
+	            END_IF;
+	            
+	            // YELLOW
+	            IF #tempSignalStack.flashing.yellow OR #processBypass.flashing.yellow THEN
+	                #tempLightByDint.yellow := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #tempSignalStack.static.yellow OR #processBypass.static.yellow THEN
+	                #tempLightByDint.yellow := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.yellow := #OFF;
+	            END_IF;
+	            
+	            // BLUE
+	            IF #tempSignalStack.flashing.blue OR #processBypass.flashing.blue THEN
+	                #tempLightByDint.blue := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #tempSignalStack.static.blue OR #processBypass.static.blue THEN
+	                #tempLightByDint.blue := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.blue := #OFF;
+	            END_IF;
+	            
+	            // GREEN
+	            IF #tempSignalStack.flashing.green OR #processBypass.flashing.green THEN
+	                #tempLightByDint.green := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #tempSignalStack.static.green OR #processBypass.static.green THEN
+	                #tempLightByDint.green := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.green := #OFF;
+	            END_IF;
+	            
+	            // HORN
+	            IF #tempSignalStack.flashing.horn OR #processBypass.flashing.horn THEN
+	                #tempLightByDint.horn := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #instPulseHorn.Q OR (#tempSignalStack.static.#horn AND #hornPulseTime = #TIME_0_SECONDS) OR #processBypass.static.horn THEN
+	                #tempLightByDint.horn := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.horn := #OFF;
+	            END_IF;
+	            
+	            // WHITE
+	            IF #tempSignalStack.flashing.white OR #processBypass.flashing.white THEN
+	                #tempLightByDint.white := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #tempSignalStack.static.white OR #processBypass.static.white THEN
+	                #tempLightByDint.white := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.white := #OFF;
+	            END_IF;
+	            
+	            // USER1
+	            IF #tempSignalStack.flashing.user1 OR #processBypass.flashing.user1 THEN
+	                #tempLightByDint.user1 := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #tempSignalStack.static.user1 OR #processBypass.static.user1 THEN
+	                #tempLightByDint.user1 := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.user1 := #OFF;
+	            END_IF;
+	            
+	            // USER2
+	            IF #tempSignalStack.flashing.user2 OR #processBypass.flashing.user2 THEN
+	                #tempLightByDint.user2 := #ON_PERIODICALLY_FLASHING;
+	            ELSIF #tempSignalStack.static.user2 OR #processBypass.static.user2 THEN
+	                #tempLightByDint.user2 := #ON_STATIC_SOLID;
+	            ELSE
+	                #tempLightByDint.user2 := #OFF;
+	            END_IF;
+	            
+	            //DISABLING OR ENABLING THE HORN
+	            #tempCmdDiseableHorn := #disableHorn;
+	        END_REGION Output logic DInt
+	        
+	        REGION Output logic periphery
+	            #tempLightsStatus.horn := ((#instPulseHorn.Q OR (#tempSignalStack.static.#horn AND #hornPulseTime = #TIME_0_SECONDS)) OR #processBypass.static.horn OR
+	            ((#tempSignalStack.flashing.horn OR #processBypass.flashing.horn) AND #freqClockBit)) AND NOT #tempCmdDiseableHorn;
+	            #tempLightsStatus.green := #tempSignalStack.static.green OR #processBypass.static.green OR ((#tempSignalStack.flashing.green OR #processBypass.flashing.green) AND #freqClockBit);
+	            #tempLightsStatus.yellow := #tempSignalStack.static.yellow OR #processBypass.static.yellow OR ((#tempSignalStack.flashing.yellow OR #processBypass.flashing.yellow) AND #freqClockBit);
+	            #tempLightsStatus.red := #tempSignalStack.static.red OR #processBypass.static.red OR ((#tempSignalStack.flashing.red OR #processBypass.flashing.red) AND #freqClockBit);
+	            #tempLightsStatus.white := #tempSignalStack.static.white OR #processBypass.static.white OR ((#tempSignalStack.flashing.white OR #processBypass.flashing.white) AND #freqClockBit);
+	            #tempLightsStatus.blue := #tempSignalStack.static.blue OR #processBypass.static.blue OR ((#tempSignalStack.flashing.blue OR #processBypass.flashing.blue) AND #freqClockBit);
+	            #tempLightsStatus.user1 := #tempSignalStack.static.user1 OR #processBypass.static.user1 OR ((#tempSignalStack.flashing.user1 OR #processBypass.flashing.user1) AND #freqClockBit);
+	            #tempLightsStatus.user2 := #tempSignalStack.static.user2 OR #processBypass.static.user2 OR ((#tempSignalStack.flashing.user2 OR #processBypass.flashing.user2) AND #freqClockBit);
+	        END_REGION Output logic periphery      
+	        
+	        REGION Output logic boolean and Dword
+	            #tempLightsByWord.statusByDWord.%X0 := #tempLightsByBool.redSolid := #tempSignalStack.static.red OR #processBypass.static.red;
+	            #tempLightsByWord.statusByDWord.%X1 := #tempLightsByBool.redFlashing := #tempSignalStack.flashing.red OR #processBypass.flashing.red;
+	            #tempLightsByWord.statusByDWord.%X2 := #tempLightsByBool.yellowSolid := #tempSignalStack.static.yellow OR #processBypass.static.yellow;
+	            #tempLightsByWord.statusByDWord.%X3 := #tempLightsByBool.yellowFlashing := #tempSignalStack.flashing.yellow OR #processBypass.flashing.yellow;
+	            #tempLightsByWord.statusByDWord.%X4 := #tempLightsByBool.blueSolid := #tempSignalStack.static.blue OR #processBypass.static.blue;
+	            #tempLightsByWord.statusByDWord.%X5 := #tempLightsByBool.blueFlashing := #tempSignalStack.flashing.blue OR #processBypass.flashing.blue;
+	            #tempLightsByWord.statusByDWord.%X6 := #tempLightsByBool.greenSolid := #tempSignalStack.static.green OR #processBypass.static.green;
+	            #tempLightsByWord.statusByDWord.%X7 := #tempLightsByBool.greenFlashing := #tempSignalStack.flashing.green OR #processBypass.flashing.green;
+	            #tempLightsByWord.statusByDWord.%X8 := #tempLightsByBool.hornSolid := ((#instPulseHorn.Q OR (#tempSignalStack.static.#horn AND #hornPulseTime = #TIME_0_SECONDS)) OR #processBypass.static.horn) AND NOT #tempCmdDiseableHorn;
+	            #tempLightsByWord.statusByDWord.%X9 := #tempLightsByBool.hornFlashing := (#tempSignalStack.flashing.horn OR #processBypass.flashing.horn) AND NOT #tempCmdDiseableHorn;
+	            #tempLightsByWord.statusByDWord.%X10 := #tempLightsByBool.whiteSolid := #tempSignalStack.static.white OR #processBypass.static.white;
+	            #tempLightsByWord.statusByDWord.%X11 := #tempLightsByBool.whiteFlashing := #tempSignalStack.flashing.white OR #processBypass.flashing.white;
+	            #tempLightsByWord.statusByDWord.%X12 := #lightsByBool.user1Solid := #tempSignalStack.static.user1 OR #processBypass.static.user1;
+	            #tempLightsByWord.statusByDWord.%X13 := #lightsByBool.user1Flashing := #tempSignalStack.flashing.user1 OR #processBypass.flashing.user1;
+	            #tempLightsByWord.statusByDWord.%X14 := #lightsByBool.user2Solid := #tempSignalStack.static.user2 OR #processBypass.static.user2;
+	            #tempLightsByWord.statusByDWord.%X15 := #lightsByBool.user2Flashing := #tempSignalStack.flashing.user2 OR #processBypass.flashing.user2;
+	        END_REGION Output logic boolean    
+	    END_REGION Set signal stack output pattern
+	END_REGION PROCESSING
+	
+	REGION OUTPUTS  
+	    // Write Signal Stack outputs
+	    #lightsStatus := #tempLightsStatus;
+	    
+	    // StackStatus write light outputs:
+	    #lightsByBool := #tempLightsByBool;
+	    #lightsByDint := #tempLightByDint;
+	    #lightsByDWord := #tempLightsByWord;
+	    
+	    // ENO mechanism is not used, just boolean logic used
+	    ENO := TRUE;
+	END_REGION OUTPUTS
+	
+END_FUNCTION_BLOCK
+

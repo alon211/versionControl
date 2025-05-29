@@ -1,0 +1,397 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="bit00_StopCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_Stop" job is running. The technology object is disabled</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Enable</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit01_DesynchronizingCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_GearOut" job or "MC_CamOut" job is active. The following axis is desynchronized</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Error</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit02_PassingBacklash" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The backlash is traversed. "&lt;TO&gt;.ActualPosition" does not hereby change</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">RestartActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit03_PhasingCommandWaiting" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_PhasingAbsolute" or "MC_PhasingRelative" job for leading value offset is waiting</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">OnlineStartValuesChanged</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit04_OffsetCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_OffsetAbsolute" or "MC_OffsetRelative" job for following value offset is active</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">ControlPanelActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit05_OffsetCommandWaiting" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_OffsetAbsolute" or "MC_OffsetRelative" job for following value offset is waiting</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HomingDone</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit06_MotionInSuperimposedCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_MotionInSuperimposed" job is running</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Done</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit07_HaltSuperimposedCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_HaltSuperimposed" job is running</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">StandStill</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit08_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">PositioningCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit09_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">JogCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit10_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">VelocityCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit11_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HomingCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit12_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">ConstantVelocity</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit13_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Accelerating</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit14_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Decelerating</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit15_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">SWLimitMinActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit16_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">SWLimitMaxActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit17_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HWLimitMinActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit18_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HWLimitMaxActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit19_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit20_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit21_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Synchronizing</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit22_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Synhronous</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit23_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">SuperimposedMotionCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit24_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">PhasingCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit25_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">AxisSimulation</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit26_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">TorqueLimitingCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit27_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">InLimitation</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit28_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">NonPositionControlled</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit29_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit30_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">InClamping</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit31_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>LAF_typeAxisDiagStatusWord2</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>Status information of a Technology object</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <MultilingualText ID="9" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="A" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>LAF_typeAxisDiagStatusWord2</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="B" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="C" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="D" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="E" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="F" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="10" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

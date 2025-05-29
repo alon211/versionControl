@@ -1,0 +1,122 @@
+﻿FUNCTION_BLOCK "LAF_SpecialFunctionsManager"
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      specialFunctions : Word;   // Special function requests from HMI
+   END_VAR
+
+   VAR_IN_OUT 
+      unitSpecialFunctions : "LAF_typeSpecialFunctions";
+      specialFunctionButtons : "LUC_typeButtons";
+   END_VAR
+
+   VAR 
+      statPreviousSpecialFunction { ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LAF_typeSpecialFunctions";
+   END_VAR
+
+   VAR_TEMP 
+      tempEdgeSpecialFunctions : "LAF_typeSpecialFunctions";
+      tempCurrentReqSpecialFunctionsToUnit : "LAF_typeSpecialFunctions";
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2024
+	    //-------------------------------------------------------------------------------
+	    // Title:            LAF_SpecialFunctionsManager
+	    // Comment/Function: Manages the interconection between the special function buttons
+	    //                   in the HMI header and the unit. For one unit and one HMI only.
+	    // Library/Family:   LAF - Library of Automation Framework
+	    // Author:           Siemens Digital Industries
+	    // Tested with:      S7-PLCSIM Advanced 6.0
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     -
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.02.00 | 30.09.2024 | SIMATIC Systems Support | First released version
+	    //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	        
+	REGION DESCRIPTION
+	    (/*
+	This block reads evaluates the special function buttons on the HMI. Only rising edges are processed.
+	If the special function is already activated in the unit, it will be deactivated.
+	If the special function is not activated, it will be activated.
+	The status about the activation is send back to the unit for the indicator on the buttons. 
+	*/)
+	END_REGION DESCRIPTION
+	
+	REGION Read commands from HMI
+	    //Detect rising edge of special function requests
+	    #tempEdgeSpecialFunctions.stopEndOfCycle := #specialFunctions.%X0 AND NOT #statPreviousSpecialFunction.stopEndOfCycle;
+	    #tempEdgeSpecialFunctions.initalPosition := #specialFunctions.%X1 AND NOT #statPreviousSpecialFunction.initalPosition;
+	    #tempEdgeSpecialFunctions.releaseEntry := #specialFunctions.%X2 AND NOT #statPreviousSpecialFunction.releaseEntry;
+	    #tempEdgeSpecialFunctions.dryRun := #specialFunctions.%X3 AND NOT #statPreviousSpecialFunction.dryRun;
+	    #tempEdgeSpecialFunctions.specialFunction05 := #specialFunctions.%X4 AND NOT #statPreviousSpecialFunction.specialFunction05;
+	    #tempEdgeSpecialFunctions.specialFunction06 := #specialFunctions.%X5 AND NOT #statPreviousSpecialFunction.specialFunction06;
+	    #tempEdgeSpecialFunctions.specialFunction07 := #specialFunctions.%X6 AND NOT #statPreviousSpecialFunction.specialFunction07;
+	    #tempEdgeSpecialFunctions.specialFunction08 := #specialFunctions.%X7 AND NOT #statPreviousSpecialFunction.specialFunction08;
+	    #tempEdgeSpecialFunctions.specialFunction09 := #specialFunctions.%X8 AND NOT #statPreviousSpecialFunction.specialFunction09;
+	    #tempEdgeSpecialFunctions.specialFunction10 := #specialFunctions.%X9 AND NOT #statPreviousSpecialFunction.specialFunction10;
+	    #tempEdgeSpecialFunctions.specialFunction11 := #specialFunctions.%X10 AND NOT #statPreviousSpecialFunction.specialFunction11;
+	    #tempEdgeSpecialFunctions.specialFunction12 := #specialFunctions.%X11 AND NOT #statPreviousSpecialFunction.specialFunction12;
+	    #tempEdgeSpecialFunctions.specialFunction13 := #specialFunctions.%X12 AND NOT #statPreviousSpecialFunction.specialFunction13;
+	    #tempEdgeSpecialFunctions.specialFunction14 := #specialFunctions.%X13 AND NOT #statPreviousSpecialFunction.specialFunction14;
+	    #tempEdgeSpecialFunctions.specialFunction15 := #specialFunctions.%X14 AND NOT #statPreviousSpecialFunction.specialFunction15;
+	    #tempEdgeSpecialFunctions.specialFunction16 := #specialFunctions.%X15 AND NOT #statPreviousSpecialFunction.specialFunction16;
+	    
+	    //Store status of special function requests for next cycle, to detect rising edges
+	    SCATTER(IN := #specialFunctions,
+	            OUT => #statPreviousSpecialFunction);
+	END_REGION Read command from HMI
+	
+	REGION Write commands to unit   
+	    //In case there is a rising edge of a requested Special Function and the respective Special function is not active, then the requested Special Function would be activated/set. 
+	    //In case there is a rising edge of a requested Special Function and the respective Special function is active, then the requested Special Function would be deactivated/reset. 
+	    #tempCurrentReqSpecialFunctionsToUnit.stopEndOfCycle := #tempEdgeSpecialFunctions.stopEndOfCycle XOR #unitSpecialFunctions.stopEndOfCycle;
+	    #tempCurrentReqSpecialFunctionsToUnit.initalPosition := #tempEdgeSpecialFunctions.initalPosition XOR #unitSpecialFunctions.initalPosition;
+	    #tempCurrentReqSpecialFunctionsToUnit.releaseEntry := #tempEdgeSpecialFunctions.releaseEntry XOR #unitSpecialFunctions.releaseEntry;
+	    #tempCurrentReqSpecialFunctionsToUnit.dryRun := #tempEdgeSpecialFunctions.dryRun XOR #unitSpecialFunctions.dryRun;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction05 := #tempEdgeSpecialFunctions.specialFunction05 XOR #unitSpecialFunctions.specialFunction05;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction06 := #tempEdgeSpecialFunctions.specialFunction06 XOR #unitSpecialFunctions.specialFunction06;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction07 := #tempEdgeSpecialFunctions.specialFunction07 XOR #unitSpecialFunctions.specialFunction07;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction08 := #tempEdgeSpecialFunctions.specialFunction08 XOR #unitSpecialFunctions.specialFunction08;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction09 := #tempEdgeSpecialFunctions.specialFunction09 XOR #unitSpecialFunctions.specialFunction09;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction10 := #tempEdgeSpecialFunctions.specialFunction10 XOR #unitSpecialFunctions.specialFunction10;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction11 := #tempEdgeSpecialFunctions.specialFunction11 XOR #unitSpecialFunctions.specialFunction11;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction12 := #tempEdgeSpecialFunctions.specialFunction12 XOR #unitSpecialFunctions.specialFunction12;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction13 := #tempEdgeSpecialFunctions.specialFunction13 XOR #unitSpecialFunctions.specialFunction13;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction14 := #tempEdgeSpecialFunctions.specialFunction14 XOR #unitSpecialFunctions.specialFunction14;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction15 := #tempEdgeSpecialFunctions.specialFunction15 XOR #unitSpecialFunctions.specialFunction15;
+	    #tempCurrentReqSpecialFunctionsToUnit.specialFunction16 := #tempEdgeSpecialFunctions.specialFunction16 XOR #unitSpecialFunctions.specialFunction16;
+	    //Write special function request funcions to units
+	    #unitSpecialFunctions := #tempCurrentReqSpecialFunctionsToUnit;
+	END_REGION Write commands to unit
+	
+	REGION Send Status to Buttons
+	    // Read if special function is active and send that information to the buttons on the HMI to vizualize that with the indicators in the buttons
+	    #specialFunctionButtons.active.%X0 := #unitSpecialFunctions.stopEndOfCycle;
+	    #specialFunctionButtons.active.%X1 := #unitSpecialFunctions.initalPosition;
+	    #specialFunctionButtons.active.%X2 := #unitSpecialFunctions.releaseEntry;
+	    #specialFunctionButtons.active.%X3 := #unitSpecialFunctions.dryRun;
+	    #specialFunctionButtons.active.%X4 := #unitSpecialFunctions.specialFunction05;
+	    #specialFunctionButtons.active.%X5 := #unitSpecialFunctions.specialFunction06;
+	    #specialFunctionButtons.active.%X6 := #unitSpecialFunctions.specialFunction07;
+	    #specialFunctionButtons.active.%X7 := #unitSpecialFunctions.specialFunction08;
+	    #specialFunctionButtons.active.%X8 := #unitSpecialFunctions.specialFunction09;
+	    #specialFunctionButtons.active.%X9 := #unitSpecialFunctions.specialFunction10;
+	    #specialFunctionButtons.active.%X10 := #unitSpecialFunctions.specialFunction11;
+	    #specialFunctionButtons.active.%X11 := #unitSpecialFunctions.specialFunction12;
+	    #specialFunctionButtons.active.%X12 := #unitSpecialFunctions.specialFunction13;
+	    #specialFunctionButtons.active.%X13 := #unitSpecialFunctions.specialFunction14;
+	    #specialFunctionButtons.active.%X14 := #unitSpecialFunctions.specialFunction15;
+	    #specialFunctionButtons.active.%X15 := #unitSpecialFunctions.specialFunction16;
+	END_REGION Send Status to Buttons
+	
+END_FUNCTION_BLOCK
+

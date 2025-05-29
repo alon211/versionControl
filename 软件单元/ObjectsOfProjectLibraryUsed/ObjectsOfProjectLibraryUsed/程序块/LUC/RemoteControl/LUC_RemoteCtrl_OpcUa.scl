@@ -1,0 +1,308 @@
+﻿FUNCTION_BLOCK "LUC_RemoteCtrl_OpcUa"
+TITLE = LUC_RemoteCtrl_OpcUa
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+NAME : LUC_RemoteCtrl_OpcUa
+VERSION : 1.2
+//This block calls the OPC UA methods to remote control the Unit. The remote interface is used as an input of the _LUC_InterfaceManager_.
+   VAR_INPUT 
+      remoteControlEnabled { ExternalWritable := 'False'} : Bool;   // Remote control is active
+      currentState { ExternalWritable := 'False'} : DInt := "LPMLV2022_STATE_STOPPED";   // Current executed state
+      currentMode { ExternalWritable := 'False'} : DInt := "LPMLV2022_MODE_MANUAL";   // Current executed mode
+      cntrlCmdDenied { ExternalWritable := 'False'; S7_HiddenAssignment := 'HideIfNoParamAssigned'} : Bool;   // Control command denied (output is reset with the next successful CntrlCmd or if input 'CntrlCmd' is set to 0 or if input 'CmdChangeRequest' is set to FALSE)
+      unitModeChangeNotAllowed : Bool;   // Requested unit mode change denied 
+      configuration { S7_HiddenAssignment := 'Show'} : "LUC_typeRemoteCtrlConfiguration";
+   END_VAR
+
+   VAR_OUTPUT 
+      error { ExternalWritable := 'False'} : Bool;   // Error occurred
+      status { ExternalWritable := 'False'} : Word := #STATUS_NO_CALL;   // Status information
+      subfunctionStatus { ExternalWritable := 'False'} : DWord;   // Status of called subfunction when error occurs
+   END_VAR
+
+   VAR_IN_OUT 
+      remoteInterface : "LUC_typeCommands";
+   END_VAR
+
+   VAR 
+      instReset { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Reset";
+      instStart { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Start";
+      instStop { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Stop";
+      instHold { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Hold";
+      instUnhold { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Unhold";
+      instSuspend { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Suspend";
+      instUnsuspend { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Unsuspend";
+      instAbort { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Abort";
+      instClear { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Clear";
+      instComplete { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_Complete";
+      instStateComplete { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_StateComplete";
+      instSetUnitMode { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_SetUnitMode";
+      instSetUnitState { ExternalVisible := 'False'; S7_SetPoint := 'False'} : "LUC_OpcUaMethod_SetUnitState";
+   END_VAR
+
+   VAR_TEMP 
+      tempStatus : Word;   // Temporary value of output 'status'
+      tempSubfunctionStatus : Word;   // Temporary value of output 'subfunctionStatus'
+   END_VAR
+
+   VAR CONSTANT 
+      STATUS_NO_ERROR : Word := 16#0000;   // No Error during call occured.
+      STATUS_NO_CALL : Word := 16#7000;   // No call of FB
+      ERR_METHOD_RESET : Word := 16#8611;   // Error in method for reset
+      ERR_METHOD_START : Word := 16#8612;   // Error in method for start
+      ERR_METHOD_STOP : Word := 16#8613;   // Error in method for stop
+      ERR_METHOD_HOLD : Word := 16#8614;   // Error in method for hold
+      ERR_METHOD_UNHOLD : Word := 16#8615;   // Error in method for unhold
+      ERR_METHOD_SUSPEND : Word := 16#8616;   // Error in method for suspend
+      ERR_METHOD_UNSUSPEND : Word := 16#8617;   // Error in method for unsuspend
+      ERR_METHOD_ABORT : Word := 16#8618;   // Error in method for abort
+      ERR_METHOD_CLEAR : Word := 16#8619;   // Error in method for clear
+      ERR_METHOD_COMPLETE : Word := 16#8620;   // Error in method for complete
+      ERR_METHOD_STATE_COMPLETE : Word := 16#8621;   // Error in method for state complete
+      ERR_METHOD_REQUEST_UNIT_MODE : Word := 16#8631;   // Error in method for RequestUnitMode
+      ERR_METHOD_REQUEST_UNIT_STATE : Word := 16#8632;   // Error in method for RequestUnitState
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //===============================================================================
+	  // Siemens AG / (c)Copyright 2024
+	  //-------------------------------------------------------------------------------
+	  // Title:            LUC_RemoteCtrl_OpcUa 
+	  // Comment/Function: This block calls the OPC UA methods to remote control the Unit. The remote interface is used as an input of the _LUC_InterfaceManager_.
+	  // Library/Family:   LUC - Library of Unit Controls
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      S7-PLCSIM Advanced 6.0
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     -
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge        | Changes applied
+	  //----------|------------|-------------------------|-----------------------------
+	  // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	  // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | Extend number of existing modes from 8 to 15. 
+	  // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Fixed SetUnitMode and SetUnitState bug. Removed the forcing of the ENO to true. 
+	  //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	(/*
+	This module provides a collection of OPC UA methods to control the _LUC_InterfaceManager_ module via the remote interface.  
+	To ensure the simplest possible use, it is only necessary to connect the instance of the _LUC_InterfaceManager_.  
+	In the configuration interface, individual methods can be selected or deselected.  
+	Make sure that the instance DB is correctly defined in the OPC UA interface.
+	 */)
+	END_REGION DESCRIPTION
+	
+	REGION Unit mode state methods
+	    //Initialize status
+	    #tempStatus := #STATUS_NO_ERROR;
+	    #tempSubfunctionStatus := #STATUS_NO_ERROR;
+	    
+	    REGION Call method reset
+	        // Call of method
+	        #instReset(methodEnable := #configuration.enableMethods.reset,
+	                   cntrlCmdDenied := #cntrlCmdDenied,
+	                   remoteControlEnabled := #remoteControlEnabled,
+	                   currentState := #currentState,
+	                   stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instReset.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_RESET;
+	            #tempSubfunctionStatus := #instReset.status;
+	        END_IF;
+	    END_REGION Call method reset
+	    
+	    REGION Call method start
+	        // Call of method
+	        #instStart(methodEnable := #configuration.enableMethods.start,
+	                   cntrlCmdDenied := #cntrlCmdDenied,
+	                   remoteControlEnabled := #remoteControlEnabled,
+	                   currentState := #currentState,
+	                   stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instStart.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_START;
+	            #tempSubfunctionStatus := #instStart.status;
+	        END_IF;
+	    END_REGION Call method start
+	    
+	    REGION Call method stop
+	        // Call of method
+	        #instStop(methodEnable := #configuration.enableMethods.stop,
+	                  cntrlCmdDenied := #cntrlCmdDenied,
+	                  remoteControlEnabled := #remoteControlEnabled,
+	                  currentState := #currentState,
+	                  stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instStop.error = TRUE) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_STOP;
+	            #tempSubfunctionStatus := #instStop.status;
+	        END_IF;
+	    END_REGION Call method stop
+	    
+	    REGION Call method hold
+	        // Call of method
+	        #instHold(methodEnable := #configuration.enableMethods.hold,
+	                  cntrlCmdDenied := #cntrlCmdDenied,
+	                  remoteControlEnabled := #remoteControlEnabled,
+	                  currentState := #currentState,
+	                  stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instHold.error = TRUE) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_HOLD;
+	            #tempSubfunctionStatus := #instHold.status;
+	        END_IF;
+	    END_REGION Call method hold
+	    
+	    REGION Call mehod unhold
+	        // Call of method
+	        #instUnhold(methodEnable := #configuration.enableMethods.unhold,
+	                    cntrlCmdDenied := #cntrlCmdDenied,
+	                    remoteControlEnabled := #remoteControlEnabled,
+	                    currentState := #currentState,
+	                    stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instUnhold.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_UNHOLD;
+	            #tempSubfunctionStatus := #instUnhold.status;
+	        END_IF;
+	    END_REGION Call mehod unhold
+	    
+	    REGION Call mehod suspend
+	        // Call of method
+	        #instSuspend(methodEnable := #configuration.enableMethods.suspend,
+	                     cntrlCmdDenied := #cntrlCmdDenied,
+	                     remoteControlEnabled := #remoteControlEnabled,
+	                     currentState := #currentState,
+	                     stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instSuspend.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_SUSPEND;
+	            #tempSubfunctionStatus := #instSuspend.status;
+	        END_IF;
+	    END_REGION Call mehod suspend
+	    
+	    REGION Call mehod unsuspend
+	        // Call of method
+	        #instUnsuspend(methodEnable := #configuration.enableMethods.unsuspend,
+	                       cntrlCmdDenied := #cntrlCmdDenied,
+	                       remoteControlEnabled := #remoteControlEnabled,
+	                       currentState := #currentState,
+	                       stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instUnsuspend.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_UNSUSPEND;
+	            #tempSubfunctionStatus := #instUnsuspend.status;
+	        END_IF;
+	    END_REGION Call mehod unsuspend
+	    
+	    REGION Call mehod abort
+	        // Call of method
+	        #instAbort(methodEnable := #configuration.enableMethods.abort,
+	                   cntrlCmdDenied := #cntrlCmdDenied,
+	                   remoteControlEnabled := #remoteControlEnabled,
+	                   currentState := #currentState,
+	                   stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instAbort.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_ABORT;
+	            #tempSubfunctionStatus := #instAbort.status;
+	        END_IF;
+	    END_REGION Call mehod abort
+	    
+	    REGION Call mehod clear
+	        // Call of method
+	        #instClear(methodEnable := #configuration.enableMethods.clear,
+	                   cntrlCmdDenied := #cntrlCmdDenied,
+	                   remoteControlEnabled := #remoteControlEnabled,
+	                   currentState := #currentState,
+	                   stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instClear.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_CLEAR;
+	            #tempSubfunctionStatus := #instClear.status;
+	        END_IF;
+	    END_REGION Call mehod clear
+	    
+	    REGION Call mehod complete
+	        // Call of method
+	        #instComplete(methodEnable := #configuration.enableMethods.complete,
+	                      cntrlCmdDenied := #cntrlCmdDenied,
+	                      remoteControlEnabled := #remoteControlEnabled,
+	                      currentState := #currentState,
+	                      stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instComplete.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_COMPLETE;
+	            #tempSubfunctionStatus := #instComplete.status;
+	        END_IF;
+	    END_REGION Call mehod complete
+	    
+	    REGION Call mehod state complete
+	        // Call of method
+	        #instStateComplete(methodEnable := #configuration.enableMethods.stateComplete,
+	                           cntrlCmdDenied := #cntrlCmdDenied,
+	                           remoteControlEnabled := #remoteControlEnabled,
+	                           currentState := #currentState,
+	                           stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instComplete.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_STATE_COMPLETE;
+	            #tempSubfunctionStatus := #instComplete.status;
+	        END_IF;
+	    END_REGION Call mehod state complete
+	    
+	    REGION Call method request unit mode
+	        // Call of method
+	        #instSetUnitMode(methodEnable := #configuration.enableMethods.requestUnitMode,
+	                         remoteControlEnabled := #remoteControlEnabled,
+	                         currentMode := #currentMode,
+	                         unitModeChangeDenied := #unitModeChangeNotAllowed,
+	                         modeRequest := #remoteInterface.modeRequests);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instSetUnitMode.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_REQUEST_UNIT_MODE;
+	            #tempSubfunctionStatus := #instSetUnitMode.status;
+	        END_IF;
+	    END_REGION Call method request unit mode
+	    
+	    REGION Call method request unit state
+	        // Call of method
+	        #instSetUnitState(methodEnable := #configuration.enableMethods.requestUnitState,
+	                          cntrlCmdDenied := #cntrlCmdDenied,
+	                          remoteControlEnabled := #remoteControlEnabled,
+	                          currentState := #currentState,
+	                          stateRequest := #remoteInterface.stateCommands);
+	        
+	        // Check if error appeared and status was not written
+	        IF (#instSetUnitState.error) AND (#tempStatus = 16#0000) THEN
+	            #tempStatus := #ERR_METHOD_REQUEST_UNIT_STATE;
+	            #tempSubfunctionStatus := #instSetUnitState.status;
+	        END_IF;
+	    END_REGION Call method request unit state
+	END_REGION
+	
+	REGION SET OUTPUTS
+	    #error := #tempStatus.%X15;
+	    #status := #tempStatus;
+	    #subfunctionStatus := #tempSubfunctionStatus;
+	END_REGION SET OUTPUTS
+	
+END_FUNCTION_BLOCK
+

@@ -1,0 +1,15 @@
+﻿NAMESPACE Safety
+FUNCTION PreProcessing : Void
+TITLE = Preprocessing
+{ S7_Optimized_Access := 'TRUE' ; Published := 'FALSE' }
+AUTHOR : Siemens_FA_SUP
+VERSION : 1.0
+//Function block to transfer standard IOs to DataToSafety DB.
+
+BEGIN
+	// Shift Data from Standard to Safety in Safety PrepocessingFOR data integrity
+	DataFromStandard := DataToSafety;
+	
+END_FUNCTION
+END_NAMESPACE
+

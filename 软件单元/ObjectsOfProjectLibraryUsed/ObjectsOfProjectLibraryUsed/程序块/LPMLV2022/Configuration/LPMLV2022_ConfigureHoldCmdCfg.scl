@@ -1,0 +1,88 @@
+﻿FUNCTION "LPMLV2022_ConfigureHoldCmdCfg" : Void
+TITLE = LPMLV2022_ConfigureHoldCmdCfg
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : APC_ERLF
+FAMILY : OMAC
+VERSION : 1.0
+//The function generates a DWord value which represents the state configuration for all unit modes. 
+// Note: Only the inputs 'Suspended' and 'Execute' must be set to comply with ANSI/ISA-TR88.00.02-2022
+   VAR_INPUT 
+      Starting : Bool;   // TRUE: The Hold control command is taken into account in state Starting
+      Idle : Bool;   // TRUE: The Hold control command is taken into account in state Idle
+      Suspended : Bool;   // TRUE: The Hold control command is taken into account in state Suspended
+      Execute : Bool;   // TRUE: The Hold control command is taken into account in state Execute
+      Unholding : Bool;   // TRUE: The Hold control command is taken into account in state Unholding
+      Suspending : Bool;   // TRUE: The Hold control command is taken into account in state Suspending
+      Unsuspending : Bool;   // TRUE: The Hold control command is taken into account in state Unsuspending
+      Completing : Bool;   // TRUE: The Hold control command is taken into account in state Completing
+      Completed : Bool;   // TRUE: The Hold control command is taken into account in state Completed
+   END_VAR
+
+   VAR_OUTPUT 
+      holdCmdCfg : DWord;   // Hold control command configuration for all unit modes (one config. for all modes). Bit locations within the DWORD value represent State numbers
+   END_VAR
+
+
+BEGIN
+	REGION HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2023
+	    //-------------------------------------------------------------------------------
+	    // Title:            FC LPMLV2022_ConfigureHoldCmdCfg (FC 30113)
+	    // Comment/Function: The function generates a DWord value which represents
+	    //                   the state configuration for all unit modes.
+	    //                
+	    //                Note
+	    //                : Only the inputs 'Suspended' and 'Execute' must be set
+	    //                      to comply with ANSI/ISA-TR88.00.02-2022
+	    // Library/Family:   LPMLV2022
+	    // Author:           APC_ERLF
+	    // Tested with:      S7-1211 with FW version V4.2, S7-1511-1 PN with FW version V2.6
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     S7-1200 FW 4.2 / S7-1500 FW 2.6
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 28.02.2023 | KT                      | First released version
+	    //===============================================================================
+	END_REGION
+	
+	
+	REGION DESCRIPTION
+	    (/*
+	This function allows the user to set the Hold control command configuration for all 
+	unit modes of the _LPMLV2022_UnitModeStateManager_ easily (one config. for all 
+	modes). The output of this function can directly be assigned to the 
+	_LPMLV2022_UnitModeStateManager_ configuration _holdCmdCfg_. The bit locations 
+	within the _holdCmdCfg_ DWord represent state numbers. A set bit means, that the 
+	Hold command is taken into account by the _LPMLV2022_UnitModeStateManager_
+	in the corresponding state.
+	
+	
+	NOTE
+	:   This function is only needed, if another configuration than the default 
+	configuration of the holdCmdCfg of the LPMLV2022_UnitModeStateManager 
+	shall be used (default: 16#0000_0060, i.e. only the bits for the states Suspended 
+	and Execute are set to comply with ANSI/ISA-TR88.00.02-2022).
+	*/)
+	    
+	    
+	END_REGION
+	
+	// Initialize states configuration
+	#holdCmdCfg := 16#0000_0000;
+	
+	// Set states configuration
+	#holdCmdCfg.%X3  := #Starting;
+	#holdCmdCfg.%X4  := #Idle;
+	#holdCmdCfg.%X5  := #Suspended;
+	#holdCmdCfg.%X6  := #Execute;
+	#holdCmdCfg.%X12 := #Unholding;
+	#holdCmdCfg.%X13 := #Suspending;
+	#holdCmdCfg.%X14 := #Unsuspending;
+	#holdCmdCfg.%X16 := #Completing;
+	#holdCmdCfg.%X17 := #Completed;
+END_FUNCTION
+

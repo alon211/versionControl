@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="EnabledModesCfg" Datatype="DWord">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Bit locations within the DWORD represent Mode numbers. A value of 1 in a bit location [0-31] indicates that the corresponding Mode number is enabled. Mode 0 is an Invalid Mode, therefore bit 0 is unused</MultiLanguageText>
+      </Comment>
+      <StartValue>16#0000_01FE</StartValue>
+    </Member>
+    <Member Name="DisabledStatesCfg" Datatype="Array[0..&quot;LPMLV2022_MAX_MODES_UPPER_LIM&quot;] of DWord">
+      <Comment>
+        <MultiLanguageText Lang="en-US">The array index represents the Mode number. Bit locations within the DWORD value represent State numbers. A value of 1 in a bit location indicates that the corresponding state number is disabled. State 0 is an Undefined State, therefore bit 0 is unused</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="ModeTransitionCfg" Datatype="Array[0..&quot;LPMLV2022_MAX_MODES_UPPER_LIM&quot;] of DWord">
+      <Comment>
+        <MultiLanguageText Lang="en-US">The array index represents the Mode number. Bit locations within the DWORD value represent State numbers. A value of 1 in a bit location indicates that a mode transition from the corresponding state number is allowed</MultiLanguageText>
+      </Comment>
+      <Subelement Path="1">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+      <Subelement Path="2">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+      <Subelement Path="3">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+      <Subelement Path="4">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+      <Subelement Path="5">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+      <Subelement Path="6">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+      <Subelement Path="7">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+      <Subelement Path="8">
+        <StartValue>16#0000_0214</StartValue>
+      </Subelement>
+    </Member>
+    <Member Name="holdCmdCfg" Datatype="DWord">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Bit locations within the DWORD value represent State numbers. A value of 1 in a bit location indicates that the Hold control command is taken into account in the corresponding state. Note: a state change is only performed if the Holding/Held states are not disabled. The 'holdCmdCfg' can only be activated for the following states: Idle, Starting, Execute, Completing, Completed, Suspending, Suspended, Unsuspending, Unholding</MultiLanguageText>
+      </Comment>
+      <StartValue>16#0000_0060</StartValue>
+    </Member>
+    <Member Name="completeCmdCfg" Datatype="DWord">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Bit locations within the DWORD value represent State numbers. A value of 1 in a bit location indicates that the Complete control command is taken into account in the corresponding state. Note: a state change is only performed if the Completing/Completed states are not disabled. The 'completeCmdCfg' can only be activated for the following states: Execute, Suspended, Held</MultiLanguageText>
+      </Comment>
+      <StartValue>16#0000_0860</StartValue>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>LPMLV2022_typeConfiguration</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>Support: tech.team.motioncontrol@siemens.com</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <MultilingualText ID="9" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="A" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>LPMLV2022_typeConfiguration</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="B" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="C" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="D" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="E" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="F" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="10" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

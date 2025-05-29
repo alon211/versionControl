@@ -1,0 +1,814 @@
+﻿FUNCTION_BLOCK "LAF_GetSinaAlarms"
+TITLE = LAF_GetSinaAlarms
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LAF
+VERSION : 1.2
+//This block reads faults and alarms of a SINAMICS drive via acyclic communication depending on the configured type of SINAMICS and the selected drive object index in the HMI by the operator.
+   VAR_INPUT 
+      enable { S7_PredefinedAssignment := 'TRUE'} : Bool := TRUE;   // FALSE = Disables functionality of FB from user program (optional), FB is normally enabled via HMI ('moduleInterface.hmi.sinaAlarmScreenActive' = TRUE)
+   END_VAR
+
+   VAR_OUTPUT 
+      valid { ExternalWritable := 'False'} : Bool;   // Valid set of output values available at the FB
+      busy { ExternalWritable := 'False'} : Bool;   // FB is not finished and new output values can be expected
+      error { ExternalWritable := 'False'} : Bool;   // An error occurred during the execution of the FB, for details see diagnostics output
+      status { ExternalWritable := 'False'} : Word := #STATUS_NO_CALL;   // 16#0000 - 16#7FFF: Status of the FB, 16#8000 - 16#FFFF: Error identification
+      diagnostics { ExternalWritable := 'False'} : "LAF_typeDiagnostics";   // Diagnostics information of FB
+      statusWriteRecord { ExternalWritable := 'False'} : DWord;   // Status output of WRREC
+      statusReadRecord { ExternalWritable := 'False'} : DWord;   // Status output of RDREC
+   END_VAR
+
+   VAR_IN_OUT 
+      configuration { S7_PredefinedAssignment := 'DriveDiagConfig.driveObjects'} : Array[*] of "LAF_typeDriveDiagConfig";
+      moduleInterface { S7_PredefinedAssignment := 'DriveDiagInterfaceHmi.diagStatus'} : "LAF_typeDriveDiagInterfaceHmi";
+   END_VAR
+
+   VAR 
+      statInternal { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Static structure for internal tags
+         enablePrevious { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Previous value of 'enable' input for edge detection
+         valid { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Value for output 'valid'
+         busy { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Value for output 'busy'
+         error { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Value for output 'error'
+         errorUserCleared { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Error occurred that can only be solved by user; rising edge at enable input necessary
+         errorAutoCleared { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Error occurred that can be acknowledged by FB
+         disablingCompleted { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // TRUE: Disabling has been completed
+         diagnostics { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LAF_typeDiagnostics" := (#STATUS_NO_CALL, (), ());
+         emptyDiagnostics { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LAF_typeDiagnostics" := (#STATUS_NO_CALL, (), ());   // Empty diagnostics information (for initialization purposes only)
+      END_STRUCT;
+      statMainState { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt := #FB_STATE_NO_PROCESSING;   // State in the state machine of the FB
+      statArrayMin { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Lower bound of configuration array
+      statArrayMax { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Upper bound of configuration array
+      instWriteRecord {InstructionName := 'WRREC'; LibVersion := '1.1'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : WRREC;   // Instance of WRREC
+      instReadRecord {InstructionName := 'RDREC'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : RDREC;   // Instance of RDREC
+      statWriteReq { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Data of write record according to parameter request
+         header { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Request header
+            reqRef { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte;   // Unique identification of the request/response pair for the IO controller. The IO device mirrors the request reference in its response
+            reqID { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte;   // Specifies the type of request (0x01=read, 0x02=write)
+            axis { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte := 16#01;   // Specifies the drive object number for a drive unit with more than one drive object
+            noPara { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte := 16#01;   // Number of parameters
+         END_STRUCT;
+         data { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Array[0..#DATA_ARRY_MAX] of Byte;   // Request data
+      END_STRUCT;
+      statReadReq { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Data of read record according to parameter response
+         header { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Request header
+            reqRef { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte;   // Mirrowed request reference in response of the IO device.
+            reqID { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte;   // Mirrowed request identifier. Specifies if request execution was positive or negative (0x01=read+, 0x02=write+, 0x81=read-, 0x82=write-)
+            axis { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte := 16#01;   // Specifies the drive object number for a drive unit with more than one drive object
+            noPara { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Byte := 16#01;   // Number of parameters
+         END_STRUCT;
+         data { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Array[0..#DATA_ARRY_MAX] of Byte;   // Request data
+      END_STRUCT;
+      instActTimer {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : IEC_TIMER;   // Instance of actual timer for
+      instReqTimer {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : IEC_TIMER;   // Instance of request timer to retrigger write request
+      statDataTransRun { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Data transfer is running
+      statWriteReqSet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Parameter for write request set
+      statActTimerIn { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Actual timer start input
+      statPrevTimeValue { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Time;   // Timer value of last trigger
+      statActTimerValueAct { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Time;   // Current timer value of actual timer
+      statActTimerValueReq { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Time;   // Current timer value of request timer
+      statPrevDriveIndex { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Previous drive index
+   END_VAR
+
+   VAR_TEMP 
+      tempEnable : Bool;   // Temporary value for input 'enable'
+      tempReferenceDesignator : WString[128];   // Temporary value for inout 'referenceDesignator'
+      tempDriveIndex : DInt;   // Temporary value for inout 'driveIndex'
+      tempSinaType : UInt;   // Temporary value for inout 'sinaType'
+      tempSinaHwID : HW_IO;   // Temporary value for inout 'sinaHwID'
+      tempDriveObjectNo : USInt;   // Temporary value for inout 'driveObjectNo'
+      tempActTimerOut : Bool;   // Actual timer output
+      tempReadReqTimerOut : Bool;   // Request timer output
+      tempEmptySina : "LAF_typeSinaDiagData";   // Empty data of SINAMICS (for initialization purposes only)
+      tempAlarmGone : Array[0..7] of DWord;   // Temporary value for alarm timestamps
+      ii : Int;   // Temporary value for loop
+      jj : Int;   // Temporary value for loop
+   END_VAR
+
+   VAR CONSTANT 
+      FB_STATE_NO_PROCESSING : DInt := 0;   // FB state: No processing
+      FB_STATE_ENABLING : DInt := 10;   // FB state: Enabling
+      FB_STATE_PROCESSING : DInt := 50;   // FB state: Processing
+      FB_STATE_DISABLING : DInt := 90;   // FB state: Disabling
+      STATUS_NO_CALL : Word := 16#7000;   // No job being currently processed
+      STATUS_FIRST_CALL : Word := 16#7001;   // First call after incoming new job (rising edge 'enable')
+      STATUS_SUBSEQUENT_CALL : Word := 16#7002;   // Subsequent call during active processing without further details
+      STATUS_WARN_ARRY_MIN : Word := 16#7003;   // Active processing with index assigned to lower bound of configuration arry
+      STATUS_WARN_ARRY_MAX : Word := 16#7004;   // Active processing with index assigned to upper bound of configuration arry
+      STAUTS_WARN_NO_SINAMICS : Word := 16#7005;   // Selected SINAMICS type in configuration not supported. Active processing with SINAMICS type assigned to no type
+      STAUTS_WARN_DO_SINGLE_AXIS : Word := 16#7006;   // Active processing with drive object number assigned to single-axis
+      SUB_STATUS_NO_ERROR : Word := 16#0000;   // NO error occurred in sub function call
+      ERR_UNDEFINED_STATE : Word := 16#8600;   // Error: due to an undefined state in state machine
+      DIM_ARRAY_CONFIG : UDInt := 1;   // Dimension of the configuration array
+      DRV_INDEX_INIT : DInt := -1;   // Initial value for drive index
+      DRV_DO_SINGLE_AXIS : USInt := 1;   // Drive object number for single-axis
+      DATA_ARRY_MAX : UInt := 235;   // Maximum size in bytes for request/response data
+      DPV1_INDEX_DB47 : DInt := 47;   // DPV1 services PROFIBUS/PROFINET: Data block 47
+      DPV1_LENGH_DATA : UInt := 240;   // DPV1 services PROFIBUS/PROFINET: Maximum length in bytes of the data record information
+      TYPE_OF_SINA_NO_TYPE : UInt := 0;   // Type of SINAMICS not specified
+      TYPE_OF_SINA_G120 : UInt := 114;   // Type of SINAMICS is G120
+      TYPE_OF_SINA_G220 : UInt := 214;   // Type of SINAMICS is G220
+      TYPE_OF_SINA_S120 : UInt := 124;   // Type of SINAMICS is S120
+      TYPE_OF_SINA_S120_EPOS : UInt := 125;   // Type of SINAMICS is S120 with EPOS
+      TYPE_OF_SINA_S200 : UInt := 220;   // Type of SINAMICS is S200
+      TYPE_OF_SINA_S200_EPOS : UInt := 221;   // Type of SINAMICS is S200 with EPOS
+      TYPE_OF_SINA_S210 : UInt := 222;   // Type of SINAMICS is S210
+      TYPE_OF_SINA_S210_EPOS : UInt := 223;   // Type of SINAMICS is S210 with EPOS
+      TYPE_OF_SINA_S220 : UInt := 224;   // Type of SINAMICS is S220
+      TYPE_OF_SINA_S220_EPOS : UInt := 225;   // Type of SINAMICS is S220 with EPOS
+      REQ_ID_READ : Byte := 16#01;   // Specifies read request for WRREC
+      REQ_ID_WRITE : Byte := 16#02;   // Specifies write request for WRREC
+      REQ_REF_G120 : Byte := 31;   // Response ID of response request of G120
+      REQ_REF_G220 : Byte := 131;   // Response ID of response request of G220
+      REQ_REF_S120 : Byte := 61;   // Response ID of response request of S120
+      REQ_REF_S200 : Byte := 141;   // Response ID of response request of S200
+      REQ_REF_S210 : Byte := 151;   // Response ID of response request of S210
+      REQ_REF_S220 : Byte := 161;   // Response ID of response request of S220
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2024
+	    //-------------------------------------------------------------------------------
+	    // Title:            LAF_GetSinaAlarms
+	    // Comment/Function: This block reads faults and alarms of a SINAMICS drive via
+	    //                   acyclic communication depending on the configured type of
+	    //                   SINAMICS and the selected drive object index in the HMI
+	    //                   by the operator.
+	    // Library/Family:   Automation Framework / Drive Diagnostic
+	    // Author:           Siemens Digital Industries
+	    // Tested with:      S7-PLCSIM Advanced 6.0
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     -
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	    // 01.01.00 | 30.06.2024 | SIMATIC Systems Support | UDTs updated, Enable/Disable
+	    // 01.02.00 | 30.09.2024 | SIMATIC Systems Support | Block information properties updated
+	    //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	(/*
+	This block reads faults and alarms via PROFIBUS/PROFINET from a SINAMICS drive, by using
+	acyclic communication with "Write data record" and "Read data record" services via the
+	PROFIdrive parameter channel with data block 47 and the WRREC and RDREC system blocks.
+	At runtime, this block is enabled when the SINAMCIS faults and alarm diagnostic screen
+	is shown in the HMI. Based on the selected drive object (index) in the HMI by the operator,
+	the faults and alarms is read out from the SINAMICS and transmitted to the HMI.
+	The shown faults and alarms in the HMI depends on the type of SINAMICS(G120, S120,
+	S120_EPOS, S200, S200_EPOS, S210, S210_EPOS). Therefore the type of SINAMICS must be
+	specified in the configuration DB. In addition, the hardware identifier (HW_IO) and
+	the number of the drive object (DO) must be configured too.
+	*/)
+	END_REGION
+	
+	REGION INPUTS
+	    // Work with temporary values / create process image   
+	    #tempEnable := #enable AND #moduleInterface.hmi.sinaAlarmScreenActive;
+	    #tempDriveIndex := #moduleInterface.hmi.driveIndex;
+	END_REGION INPUTS
+	
+	REGION ENABLING/DISABLING
+	    IF (#tempEnable = TRUE) AND (#statInternal.diagnostics.status = #STATUS_NO_CALL) THEN // Enable FB
+	        // First call; initialize FB
+	        #statInternal.valid := TRUE;
+	        #statInternal.busy := TRUE;
+	        #statInternal.error := FALSE;
+	        #statInternal.errorUserCleared := FALSE;
+	        #statInternal.errorAutoCleared := FALSE;
+	        #statInternal.disablingCompleted := FALSE;
+	        #statInternal.diagnostics := #statInternal.emptyDiagnostics;
+	        #diagnostics := #statInternal.emptyDiagnostics;
+	        #statInternal.diagnostics.status := #STATUS_FIRST_CALL;
+	        // State machine - start processing
+	        #statMainState := #FB_STATE_ENABLING;
+	        // Initialize diagnostic data
+	        #statusWriteRecord := W#16#00;
+	        #statusReadRecord := W#16#00;
+	        #statPrevDriveIndex := #DRV_INDEX_INIT;
+	        #moduleInterface.sina.sinaType := 0;
+	        FILL_BLK(IN := W#16#0000,
+	                 COUNT := 8,
+	                 OUT => #moduleInterface.sina.faultCode[0]);
+	        FILL_BLK(IN := W#16#0000,
+	                 COUNT := 4,
+	                 OUT => #moduleInterface.sina.alarmCode[0]);
+	        
+	    ELSIF (#tempEnable = FALSE) AND (#statInternal.enablePrevious = TRUE) THEN // Disable FB 
+	        #statMainState := #FB_STATE_DISABLING;
+	        
+	    ELSIF (#statInternal.diagnostics.status = #STATUS_FIRST_CALL) THEN // Set status identifier of subsequent call
+	        #statInternal.diagnostics.status := #STATUS_SUBSEQUENT_CALL;
+	    END_IF;
+	    
+	    // Edge detection 'tempEnable' 
+	    #statInternal.enablePrevious := #tempEnable;
+	END_REGION ENABLING/DISABLING
+	
+	IF (#statInternal.diagnostics.status = #STATUS_NO_CALL) THEN // Nothing to do -> End here to reduce "system load"
+	    RETURN;
+	END_IF;
+	
+	REGION STATE MACHINE
+	    CASE #statMainState OF // State machine of FB
+	        #FB_STATE_NO_PROCESSING:
+	            REGION No Processing
+	                ; // No processing active (Note: this state must always be present and left empty)
+	            END_REGION No Processing
+	            
+	        #FB_STATE_ENABLING: // Enabling active
+	            REGION Enabling
+	                // Initialize boundaries of configuration array
+	                #statArrayMin := LOWER_BOUND(ARR := #configuration, DIM := #DIM_ARRAY_CONFIG);
+	                #statArrayMax := UPPER_BOUND(ARR := #configuration, DIM := #DIM_ARRAY_CONFIG);
+	                // Continue processing with next state
+	                #statMainState := #FB_STATE_PROCESSING;
+	            END_REGION Enabling
+	            
+	        #FB_STATE_PROCESSING: // Processing active
+	            REGION Processing
+	                // When index is off boundaries, index is assigned to violated bound and active processing with warning
+	                IF (#tempDriveIndex < #statArrayMin) THEN
+	                    #tempDriveIndex := #statArrayMin;
+	                    #statInternal.diagnostics.status := #STATUS_WARN_ARRY_MIN;
+	                    #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                    #statInternal.diagnostics.stateNumber := #statMainState;
+	                ELSIF (#tempDriveIndex > #statArrayMax) THEN
+	                    #tempDriveIndex := #statArrayMax;
+	                    #statInternal.diagnostics.status := #STATUS_WARN_ARRY_MAX;
+	                    #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                    #statInternal.diagnostics.stateNumber := #statMainState;
+	                ELSE
+	                    #statInternal.diagnostics.status := #STATUS_SUBSEQUENT_CALL;
+	                    #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                    #statInternal.diagnostics.stateNumber := #statMainState;
+	                END_IF;
+	                
+	                // Work with temporary values
+	                #tempReferenceDesignator := #configuration[#tempDriveIndex].referenceDesignator;
+	                #tempSinaType := #configuration[#tempDriveIndex].sinaType;
+	                #tempSinaHwID := #configuration[#tempDriveIndex].sinaHwID;
+	                #tempDriveObjectNo := #configuration[#tempDriveIndex].sinaDriveObjectNo;
+	                
+	                // When SINAMICS type is not supported, type is assigned to no type
+	                IF (#tempSinaType <> #TYPE_OF_SINA_G120) AND
+	                    (#tempSinaType <> #TYPE_OF_SINA_S120) AND
+	                    (#tempSinaType <> #TYPE_OF_SINA_S120_EPOS) AND
+	                    (#tempSinaType <> #TYPE_OF_SINA_S200) AND
+	                    (#tempSinaType <> #TYPE_OF_SINA_S200_EPOS) AND
+	                    (#tempSinaType <> #TYPE_OF_SINA_S210) AND
+	                    (#tempSinaType <> #TYPE_OF_SINA_S210_EPOS)
+	                THEN
+	                    #tempSinaType := #TYPE_OF_SINA_NO_TYPE;
+	                    #statInternal.diagnostics.status := #STAUTS_WARN_NO_SINAMICS;
+	                    #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                    #statInternal.diagnostics.stateNumber := #statMainState;
+	                END_IF;
+	                
+	                // Check drive object number
+	                IF (#tempDriveObjectNo < #DRV_DO_SINGLE_AXIS) THEN
+	                    #tempDriveObjectNo := #DRV_DO_SINGLE_AXIS;
+	                    #statInternal.diagnostics.status := #STAUTS_WARN_DO_SINGLE_AXIS;
+	                    #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                    #statInternal.diagnostics.stateNumber := #statMainState;
+	                END_IF;
+	                
+	                // Set SINAMICS type
+	                #moduleInterface.sina.sinaType := #tempSinaType;
+	                
+	                // Actual timer for communication with drive
+	                #instActTimer.TON(IN := #statActTimerIn,
+	                                  PT := T#596h,
+	                                  Q => #tempActTimerOut,
+	                                  ET => #statActTimerValueAct);
+	                IF NOT #tempActTimerOut THEN
+	                    #statActTimerIn := TRUE;
+	                ELSE
+	                    #statActTimerIn := FALSE;
+	                    #statPrevTimeValue := T#0s;
+	                END_IF;
+	                
+	                // Initialize data
+	                IF #tempDriveIndex <> #statPrevDriveIndex THEN
+	                    // Write request
+	                    #statWriteReq.header.reqRef := B#16#00;
+	                    #statWriteReq.header.reqID := B#16#00;
+	                    #statWriteReq.header.axis := B#16#01;
+	                    #statWriteReq.header.noPara := B#16#00;
+	                    FILL_BLK(IN := B#16#00,
+	                             COUNT := #DATA_ARRY_MAX + 1,
+	                             OUT => #statWriteReq.data[0]);
+	                    #statWriteReqSet := FALSE;
+	                    // Read request
+	                    #statReadReq.header.reqRef := B#16#00;
+	                    #statReadReq.header.reqID := B#16#00;
+	                    #statReadReq.header.axis := B#16#01;
+	                    #statReadReq.header.noPara := B#16#00;
+	                    FILL_BLK(IN := B#16#00,
+	                             COUNT := #DATA_ARRY_MAX + 1,
+	                             OUT => #statReadReq.data[0]);
+	                    #statDataTransRun := FALSE;
+	                    // Diagnostic data
+	                    #statusWriteRecord := W#16#00;
+	                    #statusReadRecord := W#16#00;
+	                    #moduleInterface.sina.sinaType := 0;
+	                    FILL_BLK(IN := W#16#0000,
+	                             COUNT := 8,
+	                             OUT => #moduleInterface.sina.faultCode[0]);
+	                    FILL_BLK(IN := W#16#0000,
+	                             COUNT := 4,
+	                             OUT => #moduleInterface.sina.alarmCode[0]);
+	                    // Memorize previous selected drive object
+	                    #statPrevDriveIndex := #moduleInterface.hmi.driveIndex;
+	                END_IF;
+	                
+	                REGION Write request
+	                    CASE #tempSinaType OF
+	                        #TYPE_OF_SINA_G120:
+	                            REGION G120
+	                                #statWriteReq.header.reqRef := #REQ_REF_G120; // Order reference
+	                                #statWriteReq.header.reqID := #REQ_ID_READ; // Reading order
+	                                #statWriteReq.header.axis := USINT_TO_BYTE(#tempDriveObjectNo); // Drive object number
+	                                #statWriteReq.header.noPara := 3; // Number of parameters
+	                                // 1. Drive parameter r0947[0]-[7] (faults) in hex 0x03B3
+	                                #statWriteReq.data[0] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[1] := B#16#08; // Number of elements
+	                                #statWriteReq.data[2] := B#16#03; // Parameter number r0947 (faults) high byte
+	                                #statWriteReq.data[3] := B#16#B3; // Parameter number r0947 (faults) low byte
+	                                #statWriteReq.data[4] := B#16#00; // Subindex
+	                                #statWriteReq.data[5] := B#16#00; // Subindex
+	                                // 2. Drive parameter r2122[0]-[7] (alarms) in hex 0x084A
+	                                #statWriteReq.data[6] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[7] := B#16#08; // Number of elements
+	                                #statWriteReq.data[8] := B#16#08; // Parameter number r2122 (alarms) high byte
+	                                #statWriteReq.data[9] := B#16#4A; // Parameter number r2122 (alarms) low byte
+	                                #statWriteReq.data[10] := B#16#00; // Subindex
+	                                #statWriteReq.data[11] := B#16#00; // Subindex
+	                                // 3. Drive parameter r2125[0]-[7] (alarm time eliminated in milliseconds) in hex 0x084D
+	                                #statWriteReq.data[12] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[13] := B#16#08; // Number of elements
+	                                #statWriteReq.data[14] := B#16#08; // Parameter number r2125 (alarm time eliminated in milliseconds) high byte
+	                                #statWriteReq.data[15] := B#16#4D; // Parameter number r2125 (alarm time eliminated in milliseconds) low byte
+	                                #statWriteReq.data[16] := B#16#00; // Subindex
+	                                #statWriteReq.data[17] := B#16#00; // Subindex
+	                                // Start request
+	                                #statWriteReqSet := TRUE;
+	                                #statDataTransRun := TRUE;
+	                            END_REGION G120
+	                            
+	                        #TYPE_OF_SINA_S120, #TYPE_OF_SINA_S120_EPOS:
+	                            REGION S120
+	                                #statWriteReq.header.reqRef := #REQ_REF_S120; // Order reference
+	                                #statWriteReq.header.reqID := #REQ_ID_READ; // Reading order
+	                                #statWriteReq.header.axis := USINT_TO_BYTE(#tempDriveObjectNo); // Drive object number
+	                                #statWriteReq.header.noPara := 3; // Number of parameters
+	                                // 1. Drive parameter r0947[0]-[7] (faults) in hex 0x03B1
+	                                #statWriteReq.data[0] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[1] := B#16#08; // Number of elements
+	                                #statWriteReq.data[2] := B#16#03; // Parameter number r0945 (faults) high byte
+	                                #statWriteReq.data[3] := B#16#B1; // Parameter number r0945 (faults) low byte
+	                                #statWriteReq.data[4] := B#16#00; // Subindex
+	                                #statWriteReq.data[5] := B#16#00; // Subindex
+	                                // 2. Drive parameter r2122[0]-[7] (alarms) in hex 0x084A
+	                                #statWriteReq.data[6] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[7] := B#16#08; // Number of elements
+	                                #statWriteReq.data[8] := B#16#08; // Parameter number r2122 (alarms) high byte
+	                                #statWriteReq.data[9] := B#16#4A; // Parameter number r2122 (alarms) low byte
+	                                #statWriteReq.data[10] := B#16#00; // Subindex
+	                                #statWriteReq.data[11] := B#16#00; // Subindex
+	                                // 3. Drive parameter r2125[0]-[7] (alarm time eliminated in milliseconds) in hex 0x084D
+	                                #statWriteReq.data[12] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[13] := B#16#08; // Number of elements
+	                                #statWriteReq.data[14] := B#16#08; // Parameter number r2125 (alarm time eliminated in milliseconds) high byte
+	                                #statWriteReq.data[15] := B#16#4D; // Parameter number r2125 (alarm time eliminated in milliseconds) low byte
+	                                #statWriteReq.data[16] := B#16#00; // Subindex
+	                                #statWriteReq.data[17] := B#16#00; // Subindex
+	                                // Start request
+	                                #statWriteReqSet := TRUE;
+	                                #statDataTransRun := TRUE;
+	                            END_REGION S120   
+	                            
+	                        #TYPE_OF_SINA_S200, #TYPE_OF_SINA_S200_EPOS:
+	                            REGION S200
+	                                #statWriteReq.header.reqRef := #REQ_REF_S200; // Order reference
+	                                #statWriteReq.header.reqID := #REQ_ID_READ; // Reading order
+	                                #statWriteReq.header.axis := USINT_TO_BYTE(#tempDriveObjectNo); // Drive object number
+	                                #statWriteReq.header.noPara := 2; // Number of parameters
+	                                // 1. Drive parameter r0945[0]-[7] (faults) in hex 0x03B1
+	                                #statWriteReq.data[0] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[1] := B#16#08; // Number of elements
+	                                #statWriteReq.data[2] := B#16#03; // Parameter number r0945 (faults) high byte
+	                                #statWriteReq.data[3] := B#16#B1; // Parameter number r0945 (faults) low byte
+	                                #statWriteReq.data[4] := B#16#00; // Subindex
+	                                #statWriteReq.data[5] := B#16#00; // Subindex
+	                                // 2. Drive parameter r2122[0]-[3] (alarms) in hex 0x084A
+	                                #statWriteReq.data[6] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[7] := B#16#04; // Number of elements
+	                                #statWriteReq.data[8] := B#16#08; // Parameter number r2122 (alarms) high byte
+	                                #statWriteReq.data[9] := B#16#4A; // Parameter number r2122 (alarms) low byte
+	                                #statWriteReq.data[10] := B#16#00; // Subindex
+	                                #statWriteReq.data[11] := B#16#00; // Subindex
+	                                // Start request
+	                                #statWriteReqSet := TRUE;
+	                                #statDataTransRun := TRUE;
+	                            END_REGION S200 
+	                            
+	                        #TYPE_OF_SINA_S210, #TYPE_OF_SINA_S210_EPOS:
+	                            REGION S210
+	                                #statWriteReq.header.reqRef := #REQ_REF_S210; // Order reference
+	                                #statWriteReq.header.reqID := #REQ_ID_READ; // Reading order
+	                                #statWriteReq.header.axis := USINT_TO_BYTE(#tempDriveObjectNo); // Drive object number
+	                                #statWriteReq.header.noPara := 2; // Number of parameters
+	                                // 1. Drive parameter r0945[0]-[7] (faults) in hex 0x03B1
+	                                #statWriteReq.data[0] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[1] := B#16#08; // Number of elements
+	                                #statWriteReq.data[2] := B#16#03; // Parameter number r0945 (faults) high byte
+	                                #statWriteReq.data[3] := B#16#B1; // Parameter number r0945 (faults) low byte
+	                                #statWriteReq.data[4] := B#16#00; // Subindex
+	                                #statWriteReq.data[5] := B#16#00; // Subindex
+	                                // 2. Drive parameter r2122[0]-[3] (alarms) in hex 0x084A
+	                                #statWriteReq.data[6] := B#16#10; // Read parameter values
+	                                #statWriteReq.data[7] := B#16#04; // Number of elements
+	                                #statWriteReq.data[8] := B#16#08; // Parameter number r2122 (alarms) high byte
+	                                #statWriteReq.data[9] := B#16#4A; // Parameter number r2122 (alarms) low byte
+	                                #statWriteReq.data[10] := B#16#00; // Subindex
+	                                #statWriteReq.data[11] := B#16#00; // Subindex
+	                                // Start request
+	                                #statWriteReqSet := TRUE;
+	                                #statDataTransRun := TRUE;
+	                            END_REGION S210 
+	                            
+	                        ELSE
+	                            REGION ELSE
+	                                // Type of SINAMICS not found --> delete interface  
+	                                #tempReferenceDesignator := WSTRING#'';
+	                                #moduleInterface.sina.sinaType := 0;
+	                                FILL_BLK(IN := W#16#0000,
+	                                         COUNT := 8,
+	                                         OUT => #moduleInterface.sina.faultCode[0]);
+	                                FILL_BLK(IN := W#16#0000,
+	                                         COUNT := 4,
+	                                         OUT => #moduleInterface.sina.alarmCode[0]);
+	                            END_REGION ELSE
+	                    END_CASE;
+	                    
+	                    // Trigger new write request with 1 sec delay (1 sec delay for first trigger and after error of write/read request)
+	                    IF #statWriteReqSet AND (#statActTimerValueAct - #statPrevTimeValue) > T#1s THEN
+	                        #instWriteRecord.REQ := TRUE;
+	                        #statWriteReqSet := FALSE;
+	                        #statPrevTimeValue := #statActTimerValueAct;
+	                    END_IF;
+	                    
+	                    // Call timer for write/read requests (3 sec delay between each write request)
+	                    #instReqTimer.TON(IN := #instWriteRecord.REQ,
+	                                      PT := T#3s,
+	                                      Q => #tempReadReqTimerOut,
+	                                      ET => #statActTimerValueReq);
+	                    
+	                    // Trigger read request and retrigger write request each 3 sec to get updated data
+	                    IF #tempReadReqTimerOut THEN
+	                        #instWriteRecord.REQ := FALSE;
+	                        #instReadRecord.REQ := TRUE;
+	                    END_IF;
+	                    
+	                    // Call write request (WRREC)
+	                    #instWriteRecord(ID := #tempSinaHwID,
+	                                     INDEX := #DPV1_INDEX_DB47,
+	                                     LEN := #DPV1_LENGH_DATA,
+	                                     RECORD := #statWriteReq);
+	                    
+	                    // Stop write request after error
+	                    IF #instWriteRecord.ERROR AND (#statActTimerValueAct - #statPrevTimeValue) > T#1s THEN
+	                        #statDataTransRun := FALSE;
+	                        #instWriteRecord.REQ := FALSE;
+	                        #statPrevTimeValue := #statActTimerValueAct;
+	                    END_IF;
+	                    
+	                    // Save status for debugging
+	                    IF #instWriteRecord.ERROR THEN
+	                        #statusWriteRecord := #instWriteRecord.STATUS;
+	                    END_IF;
+	                END_REGION Write request
+	                
+	                REGION Read request
+	                    // Stop read request after valid data response
+	                    IF #instReadRecord.VALID AND (#statActTimerValueAct - #statPrevTimeValue) > T#1s THEN
+	                        #instReadRecord.REQ := FALSE;
+	                        #statPrevTimeValue := #statActTimerValueAct;
+	                    END_IF;
+	                    
+	                    // Stop read request after error
+	                    IF #instReadRecord.ERROR AND (#statActTimerValueAct - #statPrevTimeValue) > T#1s THEN
+	                        #statDataTransRun := FALSE;
+	                        #instReadRecord.REQ := FALSE;
+	                        #statPrevTimeValue := #statActTimerValueAct;
+	                    END_IF;
+	                    
+	                    // Save status for debugging
+	                    IF #instReadRecord.ERROR THEN
+	                        #statusReadRecord := #instReadRecord.STATUS;
+	                    END_IF;
+	                    
+	                    // Call read request (RDREC)
+	                    #instReadRecord(ID := #tempSinaHwID,
+	                                    INDEX := #DPV1_INDEX_DB47,
+	                                    MLEN := #DPV1_LENGH_DATA,
+	                                    RECORD := #statReadReq);
+	                    
+	                    // Copy valid data from read response to HMI interface
+	                    IF #instReadRecord.VALID AND #statReadReq.header.reqRef <> B#16#0 THEN
+	                        // Read response is related to write request via order reference "REQ_REF"
+	                        // Order reference from write request is mirrowed in read response
+	                        CASE #statReadReq.header.reqRef OF
+	                            #REQ_REF_G120:
+	                                REGION G120
+	                                    // 1. Fault
+	                                    #moduleInterface.sina.faultCode[0].%B1 := #statReadReq.data[2]; // high byte
+	                                    #moduleInterface.sina.faultCode[0].%B0 := #statReadReq.data[3]; // low byte
+	                                    // 2. Fault
+	                                    #moduleInterface.sina.faultCode[1].%B1 := #statReadReq.data[4]; // high byte
+	                                    #moduleInterface.sina.faultCode[1].%B0 := #statReadReq.data[5]; // low byte
+	                                    // 3. Fault
+	                                    #moduleInterface.sina.faultCode[2].%B1 := #statReadReq.data[6]; // high byte
+	                                    #moduleInterface.sina.faultCode[2].%B0 := #statReadReq.data[7]; // low byte
+	                                    // 4. Fault
+	                                    #moduleInterface.sina.faultCode[3].%B1 := #statReadReq.data[8]; // high byte
+	                                    #moduleInterface.sina.faultCode[3].%B0 := #statReadReq.data[9]; // low byte
+	                                    // 5. Fault
+	                                    #moduleInterface.sina.faultCode[4].%B1 := #statReadReq.data[10]; // high byte
+	                                    #moduleInterface.sina.faultCode[4].%B0 := #statReadReq.data[11]; // low byte
+	                                    // 6. Fault
+	                                    #moduleInterface.sina.faultCode[5].%B1 := #statReadReq.data[12]; // high byte
+	                                    #moduleInterface.sina.faultCode[5].%B0 := #statReadReq.data[13]; // low byte
+	                                    // 7. Fault
+	                                    #moduleInterface.sina.faultCode[6].%B1 := #statReadReq.data[14]; // high byte
+	                                    #moduleInterface.sina.faultCode[6].%B0 := #statReadReq.data[15]; // low byte
+	                                    // 8. Fault
+	                                    #moduleInterface.sina.faultCode[7].%B1 := #statReadReq.data[16]; // high byte
+	                                    #moduleInterface.sina.faultCode[7].%B0 := #statReadReq.data[17]; // low byte
+	                                    // Filling alarms
+	                                    #jj := 0;
+	                                    // Examine first 8 alarms
+	                                    // At 0ms the alarm is current, otherwise it is in the buffer
+	                                    // Show a maximum of 4 current alarms
+	                                    FOR #ii := 0 TO 7 BY 1 DO
+	                                        // Initialize the array of alarms
+	                                        IF #ii < 4 THEN
+	                                            #moduleInterface.sina.alarmCode[#ii] := W#16#0000;
+	                                        END_IF;
+	                                        
+	                                        // Timestamp alarm gone
+	                                        #tempAlarmGone[#ii].%B3 := #statReadReq.data[38 + (4 * #ii)];
+	                                        #tempAlarmGone[#ii].%B2 := #statReadReq.data[39 + (4 * #ii)];
+	                                        #tempAlarmGone[#ii].%B1 := #statReadReq.data[40 + (4 * #ii)];
+	                                        #tempAlarmGone[#ii].%B0 := #statReadReq.data[41 + (4 * #ii)];
+	                                        
+	                                        // Compare timestamp with 0ms. TRUE = alarm is current, FALSE = alarm is in the buffer
+	                                        IF #tempAlarmGone[#ii] = DW#16#00000000 THEN
+	                                            #moduleInterface.sina.alarmCode[#jj].%B1 := #statReadReq.data[20 + (2 * + #ii)]; // high Byte
+	                                            #moduleInterface.sina.alarmCode[#jj].%B0 := #statReadReq.data[21 + (2 * + #ii)]; // low byte
+	                                            #jj := #jj + 1;
+	                                            
+	                                            // Show 4 current alarms, cancel loop because of array limit
+	                                            IF #jj >= 4 THEN
+	                                                EXIT;
+	                                            END_IF;
+	                                        END_IF;
+	                                    END_FOR;
+	                                END_REGION G120
+	                                
+	                            #REQ_REF_S120:
+	                                REGION S120
+	                                    // 1. Fault
+	                                    #moduleInterface.sina.faultCode[0].%B1 := #statReadReq.data[2]; // high byte
+	                                    #moduleInterface.sina.faultCode[0].%B0 := #statReadReq.data[3]; // low byte
+	                                    // 2. Fault
+	                                    #moduleInterface.sina.faultCode[1].%B1 := #statReadReq.data[4]; // high byte
+	                                    #moduleInterface.sina.faultCode[1].%B0 := #statReadReq.data[5]; // low byte
+	                                    // 3. Fault
+	                                    #moduleInterface.sina.faultCode[2].%B1 := #statReadReq.data[6]; // high byte
+	                                    #moduleInterface.sina.faultCode[2].%B0 := #statReadReq.data[7]; // low byte
+	                                    // 4. Fault
+	                                    #moduleInterface.sina.faultCode[3].%B1 := #statReadReq.data[8]; // high byte
+	                                    #moduleInterface.sina.faultCode[3].%B0 := #statReadReq.data[9]; // low byte
+	                                    // 5. Fault
+	                                    #moduleInterface.sina.faultCode[4].%B1 := #statReadReq.data[10]; // high byte
+	                                    #moduleInterface.sina.faultCode[4].%B0 := #statReadReq.data[11]; // low byte
+	                                    // 6. Fault
+	                                    #moduleInterface.sina.faultCode[5].%B1 := #statReadReq.data[12]; // high byte
+	                                    #moduleInterface.sina.faultCode[5].%B0 := #statReadReq.data[13]; // low byte
+	                                    // 7. Fault
+	                                    #moduleInterface.sina.faultCode[6].%B1 := #statReadReq.data[14]; // high byte
+	                                    #moduleInterface.sina.faultCode[6].%B0 := #statReadReq.data[15]; // low byte
+	                                    // 8. Fault
+	                                    #moduleInterface.sina.faultCode[7].%B1 := #statReadReq.data[16]; // high byte
+	                                    #moduleInterface.sina.faultCode[7].%B0 := #statReadReq.data[17]; // low byte
+	                                    // Filling alarms
+	                                    #jj := 0;
+	                                    // Examine first 8 alarms
+	                                    // At 0ms the alarm is current, otherwise it is in the buffer
+	                                    // Show a maximum of 4 current alarms
+	                                    FOR #ii := 0 TO 7 BY 1 DO
+	                                        // Initialize the array of alarms
+	                                        IF #ii < 4 THEN
+	                                            #moduleInterface.sina.alarmCode[#ii] := W#16#0000;
+	                                        END_IF;
+	                                        
+	                                        // Timestamp alarm gone
+	                                        #tempAlarmGone[#ii].%B3 := #statReadReq.data[38 + (4 * #ii)];
+	                                        #tempAlarmGone[#ii].%B2 := #statReadReq.data[39 + (4 * #ii)];
+	                                        #tempAlarmGone[#ii].%B1 := #statReadReq.data[40 + (4 * #ii)];
+	                                        #tempAlarmGone[#ii].%B0 := #statReadReq.data[41 + (4 * #ii)];
+	                                        
+	                                        // Compare timestamp with 0ms. TRUE = alarm is current, FALSE = alarm is in the buffer
+	                                        IF #tempAlarmGone[#ii] = DW#16#00000000 THEN
+	                                            #moduleInterface.sina.alarmCode[#jj].%B1 := #statReadReq.data[20 + (2 * + #ii)]; // high byte
+	                                            #moduleInterface.sina.alarmCode[#jj].%B0 := #statReadReq.data[21 + (2 * + #ii)]; // low byte
+	                                            #jj := #jj + 1;
+	                                            
+	                                            // Show 4 current alarms, cancel loop because of array limit
+	                                            IF #jj >= 4 THEN
+	                                                EXIT;
+	                                            END_IF;
+	                                        END_IF;
+	                                    END_FOR;
+	                                END_REGION S120
+	                                
+	                            #REQ_REF_S200:
+	                                REGION S200
+	                                    // 1. Fault
+	                                    #moduleInterface.sina.faultCode[0].%B1 := #statReadReq.data[2]; // high byte
+	                                    #moduleInterface.sina.faultCode[0].%B0 := #statReadReq.data[3]; // low byte
+	                                    // 2. Fault
+	                                    #moduleInterface.sina.faultCode[1].%B1 := #statReadReq.data[4]; // high byte
+	                                    #moduleInterface.sina.faultCode[1].%B0 := #statReadReq.data[5]; // low byte
+	                                    // 3. Fault
+	                                    #moduleInterface.sina.faultCode[2].%B1 := #statReadReq.data[6]; // high byte
+	                                    #moduleInterface.sina.faultCode[2].%B0 := #statReadReq.data[7]; // low byte
+	                                    // 4. Fault
+	                                    #moduleInterface.sina.faultCode[3].%B1 := #statReadReq.data[8]; // high byte
+	                                    #moduleInterface.sina.faultCode[3].%B0 := #statReadReq.data[9]; // low byte
+	                                    // 5. Fault
+	                                    #moduleInterface.sina.faultCode[4].%B1 := #statReadReq.data[10]; // high byte
+	                                    #moduleInterface.sina.faultCode[4].%B0 := #statReadReq.data[11]; // low byte
+	                                    // 6. Fault
+	                                    #moduleInterface.sina.faultCode[5].%B1 := #statReadReq.data[12]; // high byte
+	                                    #moduleInterface.sina.faultCode[5].%B0 := #statReadReq.data[13]; // low byte
+	                                    // 7. Fault
+	                                    #moduleInterface.sina.faultCode[6].%B1 := #statReadReq.data[14]; // high byte
+	                                    #moduleInterface.sina.faultCode[6].%B0 := #statReadReq.data[15]; // low byte
+	                                    // 8. Fault
+	                                    #moduleInterface.sina.faultCode[7].%B1 := #statReadReq.data[16]; // high byte
+	                                    #moduleInterface.sina.faultCode[7].%B0 := #statReadReq.data[17]; // low byte
+	                                    // 1. Alarm
+	                                    #moduleInterface.sina.alarmCode[0].%B1 := #statReadReq.data[20]; // high byte
+	                                    #moduleInterface.sina.alarmCode[0].%B0 := #statReadReq.data[21]; // low byte
+	                                    // 2. Alarm
+	                                    #moduleInterface.sina.alarmCode[1].%B1 := #statReadReq.data[22]; // high byte
+	                                    #moduleInterface.sina.alarmCode[1].%B0 := #statReadReq.data[23]; // low byte
+	                                    // 3. Alarm
+	                                    #moduleInterface.sina.alarmCode[2].%B1 := #statReadReq.data[24]; // high byte
+	                                    #moduleInterface.sina.alarmCode[2].%B0 := #statReadReq.data[25]; // low byte
+	                                    // 4. Alarm
+	                                    #moduleInterface.sina.alarmCode[3].%B1 := #statReadReq.data[26]; // high byte
+	                                    #moduleInterface.sina.alarmCode[3].%B0 := #statReadReq.data[27]; // low byte
+	                                END_REGION S200   
+	                                
+	                            #REQ_REF_S210:
+	                                REGION S210
+	                                    // 1. Fault
+	                                    #moduleInterface.sina.faultCode[0].%B1 := #statReadReq.data[2]; // high byte
+	                                    #moduleInterface.sina.faultCode[0].%B0 := #statReadReq.data[3]; // low byte
+	                                    // 2. Fault
+	                                    #moduleInterface.sina.faultCode[1].%B1 := #statReadReq.data[4]; // high byte
+	                                    #moduleInterface.sina.faultCode[1].%B0 := #statReadReq.data[5]; // low byte
+	                                    // 3. Fault
+	                                    #moduleInterface.sina.faultCode[2].%B1 := #statReadReq.data[6]; // high byte
+	                                    #moduleInterface.sina.faultCode[2].%B0 := #statReadReq.data[7]; // low byte
+	                                    // 4. Fault
+	                                    #moduleInterface.sina.faultCode[3].%B1 := #statReadReq.data[8]; // high byte
+	                                    #moduleInterface.sina.faultCode[3].%B0 := #statReadReq.data[9]; // low byte
+	                                    // 5. Fault
+	                                    #moduleInterface.sina.faultCode[4].%B1 := #statReadReq.data[10]; // high byte
+	                                    #moduleInterface.sina.faultCode[4].%B0 := #statReadReq.data[11]; // low byte
+	                                    // 6. Fault
+	                                    #moduleInterface.sina.faultCode[5].%B1 := #statReadReq.data[12]; // high byte
+	                                    #moduleInterface.sina.faultCode[5].%B0 := #statReadReq.data[13]; // low byte
+	                                    // 7. Fault
+	                                    #moduleInterface.sina.faultCode[6].%B1 := #statReadReq.data[14]; // high byte
+	                                    #moduleInterface.sina.faultCode[6].%B0 := #statReadReq.data[15]; // low byte
+	                                    // 8. Fault
+	                                    #moduleInterface.sina.faultCode[7].%B1 := #statReadReq.data[16]; // high byte
+	                                    #moduleInterface.sina.faultCode[7].%B0 := #statReadReq.data[17]; // low byte
+	                                    // 1. Alarm
+	                                    #moduleInterface.sina.alarmCode[0].%B1 := #statReadReq.data[20]; // high byte
+	                                    #moduleInterface.sina.alarmCode[0].%B0 := #statReadReq.data[21]; // low byte
+	                                    // 2. Alarm
+	                                    #moduleInterface.sina.alarmCode[1].%B1 := #statReadReq.data[22]; // high byte
+	                                    #moduleInterface.sina.alarmCode[1].%B0 := #statReadReq.data[23]; // low byte
+	                                    // 3. Alarm
+	                                    #moduleInterface.sina.alarmCode[2].%B1 := #statReadReq.data[24]; // high byte
+	                                    #moduleInterface.sina.alarmCode[2].%B0 := #statReadReq.data[25]; // low byte
+	                                    // 4. Alarm
+	                                    #moduleInterface.sina.alarmCode[3].%B1 := #statReadReq.data[26]; // high byte
+	                                    #moduleInterface.sina.alarmCode[3].%B0 := #statReadReq.data[27]; // low byte
+	                                END_REGION S210
+	                        END_CASE;
+	                    END_IF;
+	                END_REGION Read request
+	            END_REGION Processing
+	            
+	        #FB_STATE_DISABLING: // Disabling active
+	            REGION Disabling
+	                // Delete interface
+	                #statusWriteRecord := W#16#00;
+	                #statusReadRecord := W#16#00;
+	                #statPrevDriveIndex := #DRV_INDEX_INIT;
+	                #tempReferenceDesignator := WSTRING#'';
+	                #moduleInterface.sina.sinaType := 0;
+	                FILL_BLK(IN := W#16#0000,
+	                         COUNT := 8,
+	                         OUT => #moduleInterface.sina.faultCode[0]);
+	                FILL_BLK(IN := W#16#0000,
+	                         COUNT := 4,
+	                         OUT => #moduleInterface.sina.alarmCode[0]);
+	                // When disabling is complete the '#statDisablingCompleted' must be set
+	                #statInternal.disablingCompleted := TRUE;
+	            END_REGION Disabling
+	            
+	        ELSE // Undefined state in state machine reached
+	            REGION Undefined state
+	                #statInternal.diagnostics.status := #ERR_UNDEFINED_STATE;
+	                #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                #statInternal.diagnostics.stateNumber := #statMainState;
+	                #statInternal.errorUserCleared := TRUE;
+	            END_REGION Undefined state
+	    END_CASE;
+	END_REGION STATE MACHINE
+	
+	REGION OUTPUTS
+	    // Write outputs
+	    IF (#statInternal.disablingCompleted = TRUE) THEN
+	        REGION Disabling
+	            // Reset outputs if disabling completed
+	            #statInternal.valid := FALSE;
+	            #statInternal.busy := FALSE;
+	            #statInternal.error := FALSE;
+	            #statInternal.errorUserCleared := FALSE;
+	            #statInternal.errorAutoCleared := FALSE;
+	            #statInternal.diagnostics.status := #STATUS_NO_CALL;
+	            #statMainState := #FB_STATE_NO_PROCESSING;
+	        END_REGION Disabling
+	        
+	    ELSIF (#statInternal.errorUserCleared = TRUE) AND (#statInternal.error = FALSE) THEN
+	        REGION Error user cleared
+	            // Error can only be cleared by user; rising edge for 'tempEnable' is needed to continue 
+	            #statInternal.valid := FALSE;
+	            #statInternal.busy := FALSE;
+	            #statInternal.error := TRUE;
+	            // Write diagnostics
+	            //#diagnostics := #statDiagnostic;
+	            #diagnostics := #statInternal.diagnostics;
+	            // execution aborted --> set state no processing
+	            #statMainState := #FB_STATE_NO_PROCESSING;
+	        END_REGION Error user cleared
+	        
+	    ELSIF (#statInternal.errorAutoCleared = TRUE) AND (#statInternal.error = FALSE) THEN
+	        REGION Error auto cleared
+	            // Error can be reset by FB automatically
+	            #statInternal.valid := FALSE;
+	            #statInternal.busy := TRUE;
+	            #statInternal.error := TRUE;
+	            // Write diagnostics
+	            #diagnostics := #statInternal.diagnostics;
+	        END_REGION Error auto cleared
+	        
+	    ELSIF (#statInternal.errorAutoCleared = FALSE) AND (#statInternal.errorUserCleared = FALSE) AND (#statInternal.error = TRUE) THEN
+	        REGION After user/auto cleared or command aborted
+	            // If autocleared error is acknowledged
+	            #statInternal.valid := TRUE;
+	            #statInternal.busy := TRUE;
+	            #statInternal.error := FALSE;
+	        END_REGION After user/auto cleared or command aborted
+	    END_IF;
+	    
+	    REGION Write static/temp values to outputs
+	        #valid := #statInternal.valid;
+	        #busy := #statInternal.busy;
+	        #error := #statInternal.error;
+	        #status := #statInternal.diagnostics.status;
+	        // ENO mechanism
+	        ENO := NOT #statInternal.error;
+	        // Application specific values to outputs
+	        #moduleInterface.hmi.referenceDesignator := #tempReferenceDesignator;
+	    END_REGION Write static/temp values to outputs
+	END_REGION OUTPUTS
+	
+END_FUNCTION_BLOCK
+

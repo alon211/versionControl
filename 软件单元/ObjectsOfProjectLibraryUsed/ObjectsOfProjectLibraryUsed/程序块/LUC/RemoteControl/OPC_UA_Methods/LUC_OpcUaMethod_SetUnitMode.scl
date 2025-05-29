@@ -1,0 +1,240 @@
+﻿FUNCTION_BLOCK "LUC_OpcUaMethod_SetUnitMode"
+TITLE = LUC_OpcUaMethod_SetUnitMode
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+NAME : LUC_OpcUaMethod_SetUnitMode
+//This Block represents one OPC UA Method interface to send a defined command to the _LUC_InterfaceManager_ instance. The Method is called in the method collector `LUC_RemoteCtrl_OpcUa`, where all other available OPC UA methods are called as well. Therefore, there is no need to call this single method.
+   VAR_INPUT 
+      methodEnable { ExternalWritable := 'False'} : Bool;   // Method is enabled
+      remoteControlEnabled { ExternalWritable := 'False'} : Bool;   // Remote control is active
+      currentMode { ExternalWritable := 'False'} : DInt := "LPMLV2022_STATE_STOPPED";   // Current selected mode of the unit
+      unitModeChangeDenied { ExternalWritable := 'False'} : Bool;   // Requested unit mode change denied (output is reset with the next successful unit mode change or if input 'UnitMode' is set to 0 or if input 'UnitModeChangeRequest' is set to FALSE)
+   END_VAR
+
+   VAR_OUTPUT 
+      error { ExternalWritable := 'False'} : Bool;   // Error occurred
+      status { ExternalWritable := 'False'} : Word := #STATUS_NO_CALL;   // Status identifier
+      subfunctionStatus { ExternalWritable := 'False'} : DWord;   // Status of called subfunction when error occurs
+   END_VAR
+
+   VAR_IN_OUT 
+      modeRequest : "LUC_typeModeRequests";   // Commands to request a mode change
+   END_VAR
+
+   VAR 
+      OPC_UA_ServerMethodPre_Instance {InstructionName := 'OPC_UA_ServerMethodPre'; LibVersion := '1.0'; ExternalVisible := 'False'; S7_SetPoint := 'False'} : OPC_UA_ServerMethodPre;
+      OPC_UA_ServerMethodPost_Instance {InstructionName := 'OPC_UA_ServerMethodPost'; LibVersion := '1.0'; ExternalVisible := 'False'; S7_SetPoint := 'False'} : OPC_UA_ServerMethodPost;
+      UAMethod_InParameters { ExternalVisible := 'False'} : Struct   // Input parameters for OPC UA Method
+         RequestedMode { ExternalVisible := 'False'} : DInt;
+      END_STRUCT;
+      statLastCycleMode { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Mode of last plc cycle
+   END_VAR
+
+   VAR_TEMP 
+      tempStatus : Word;   // Status of function block
+      tempSubfunctionStatus : DWord;   // Status of subfunction from last call
+      tempPostResult : DWord;   // Result for post operation
+      tempPostFinished : Bool;   // Call finished successfully
+   END_VAR
+
+   VAR CONSTANT 
+      LUC_MODE_NO_REQUEST : DInt := -1;   // Unit command "No Request"
+      LUC_MODE_INVALID : DInt := 0;   // Mode Invalid
+      LUC_MODE_PRODUCTION : DInt := 1;   // Mode Production
+      LUC_MODE_MAINTENANCE : DInt := 2;   // Mode Maintenance
+      LUC_MODE_MANUAL : DInt := 3;   // Mode Manual
+      LUC_MODE_USER_01 : DInt := 4;   // Mode User 01
+      LUC_MODE_USER_02 : DInt := 5;   // Mode User 02
+      LUC_MODE_USER_03 : DInt := 6;   // Mode User 03
+      LUC_MODE_USER_04 : DInt := 7;   // Mode User 04
+      LUC_MODE_USER_05 : DInt := 8;   // Mode User 05
+      LUC_MODE_USER_06 : DInt := 9;   // Mode User 06
+      LUC_MODE_USER_07 : DInt := 10;   // Mode User 07
+      LUC_MODE_USER_08 : DInt := 11;   // Mode User 08
+      LUC_MODE_USER_09 : DInt := 12;   // Mode User 09
+      LUC_MODE_USER_10 : DInt := 13;   // Mode User 10
+      LUC_MODE_USER_11 : DInt := 14;   // Mode User 11
+      LUC_MODE_USER_12 : DInt := 15;   // Mode User 12
+      LUC_MODE_USER_13 : DInt := 16;   // Mode User 13
+      OPC_UA_GOOD : DWord := 16#0000_0000;   // OPC UA Result Code: The operation was successful
+      OPC_UA_BAD_INVALID_STATE : DWord := 16#80AF_0000;   // OPC UA Result Code: The operation cannot be completed because the Object is closed, uninitialized or in some other invalid state
+      OPC_UA_BAD_USER_ACCESS_DENIED : DWord := 16#801F_0000;   // OPC UA Result Code: The user does not have permission to perform the requested operation
+      OPC_UA_BAD_CONFIGURATION_ERROR : DWord := 16#8089_0000 ;   // OPC UA Result Code: There is a problem with the configuration that affects the usefulness of the value
+      STATUS_EXECUTION_FINISHED : Word := 16#0000;   // Execution finished without errors
+      STATUS_NO_CALL : Word := 16#7000;   // No call of FB
+      ERR_METHOD_PRE : Word := 16#8600;   // Error in block OPC_UA_ServerMethodPre
+      ERR_METHOD_POST : Word := 16#8601;   // Error in block OPC_UA_ServerMethodPost
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //===============================================================================
+	  // Siemens AG / (c)Copyright 2024
+	  //-------------------------------------------------------------------------------
+	  // Title:            LUC_OpcUaMethod_SetUnitMode
+	  // Comment/Function: This Block represents one OPC UA Method interface to send a defined command to the _LUC_InterfaceManager_ instance.
+	  //                   The Method is called in the method collector `LUC_RemoteCtrl_OpcUa`, where all other available OPC UA methods are called as well.
+	  //                   Therefore, there is no need to call this single method. 
+	  // Library/Family:   LUC - Library of Unit Control
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      -
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     Call the call environment method collector only - `LUC_RemoteCtrl_OpcUa` 
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge        | Changes applied
+	  //----------|------------|-------------------------|-----------------------------
+	  // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	  // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | Included LPMLV2022 constants as a local constants in the block. Extended number of existing modes from 8 to 15.
+	  // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Removed the forcing of the ENO to true.
+	  //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION METHOD PRE
+	  // Call of the pre method block
+	  #OPC_UA_ServerMethodPre_Instance(UAMethod_InParameters := #UAMethod_InParameters);
+	  
+	  // Check if error at method occurred
+	  IF (#OPC_UA_ServerMethodPre_Instance.Error = TRUE) THEN
+	    #tempStatus := #ERR_METHOD_PRE;
+	    #tempSubfunctionStatus := #OPC_UA_ServerMethodPre_Instance.Status;
+	  END_IF;
+	END_REGION METHOD PRE
+	
+	REGION METHOD CALLED
+	  IF (#OPC_UA_ServerMethodPre_Instance.UAMethod_Called) THEN
+	    // No state change allowed at the moment
+	    IF NOT #remoteControlEnabled THEN
+	      #tempPostResult := #OPC_UA_BAD_USER_ACCESS_DENIED;
+	      #tempPostFinished := TRUE;
+	      
+	    ELSIF NOT #methodEnable THEN
+	      #tempPostResult := #OPC_UA_BAD_CONFIGURATION_ERROR;
+	      #tempPostFinished := TRUE;
+	      
+	      // check if call ist already set
+	    ELSIF #UAMethod_InParameters.RequestedMode <> #LUC_MODE_NO_REQUEST
+	      OR #UAMethod_InParameters.RequestedMode <> #LUC_MODE_INVALID THEN
+	      CASE #UAMethod_InParameters.RequestedMode OF
+	        #LUC_MODE_MAINTENANCE:
+	          #modeRequest.maintenance := TRUE;
+	        #LUC_MODE_MANUAL:
+	          #modeRequest.manual := TRUE;
+	        #LUC_MODE_PRODUCTION:
+	          #modeRequest.production := TRUE;
+	        #LUC_MODE_USER_01:
+	          #modeRequest.userMode01 := TRUE;
+	        #LUC_MODE_USER_02:
+	          #modeRequest.userMode02 := TRUE;
+	        #LUC_MODE_USER_03:
+	          #modeRequest.userMode03 := TRUE;
+	        #LUC_MODE_USER_04:
+	          #modeRequest.userMode04 := TRUE;
+	        #LUC_MODE_USER_05:
+	            #modeRequest.userMode05 := TRUE;
+	        #LUC_MODE_USER_06:
+	            #modeRequest.userMode06 := TRUE;
+	        #LUC_MODE_USER_07:
+	            #modeRequest.userMode07 := TRUE;
+	        #LUC_MODE_USER_08:
+	            #modeRequest.userMode08 := TRUE;
+	        #LUC_MODE_USER_09:
+	            #modeRequest.userMode09 := TRUE;
+	        #LUC_MODE_USER_10:
+	            #modeRequest.userMode10 := TRUE;
+	        #LUC_MODE_USER_11:
+	            #modeRequest.userMode11 := TRUE;
+	        #LUC_MODE_USER_12:
+	            #modeRequest.userMode12 := TRUE;
+	        #LUC_MODE_USER_13:
+	            #modeRequest.userMode13 := TRUE;
+	            
+	        #LUC_MODE_INVALID:
+	          #tempPostResult := #OPC_UA_BAD_INVALID_STATE;
+	          #tempPostFinished := TRUE;
+	        ELSE
+	          #tempPostResult := #OPC_UA_BAD_INVALID_STATE;
+	          #tempPostFinished := TRUE;
+	      END_CASE;
+	    END_IF;
+	    
+	    // check if change was successful
+	    IF #currentMode <> #statLastCycleMode THEN
+	      #tempPostResult := #OPC_UA_GOOD;
+	      #tempPostFinished := TRUE;
+	      
+	      // check if change was denied - in case of wrong state from where we come.....
+	    ELSIF #unitModeChangeDenied THEN
+	      #tempPostResult := #OPC_UA_BAD_INVALID_STATE;
+	      #tempPostFinished := TRUE;
+	    END_IF;
+	    
+	    IF #tempPostFinished THEN
+	      // reset OPC variable
+	      #UAMethod_InParameters.RequestedMode := #LUC_MODE_NO_REQUEST;
+	      
+	      // reset mode cmd request variables
+	      #modeRequest.maintenance :=
+	      #modeRequest.manual :=
+	      #modeRequest.production :=
+	      #modeRequest.userMode01 :=
+	      #modeRequest.userMode02 :=
+	      #modeRequest.userMode03 :=
+	      #modeRequest.userMode04 :=
+	      #modeRequest.userMode05 :=
+	      #modeRequest.userMode06 :=
+	      #modeRequest.userMode07 :=
+	      #modeRequest.userMode08 :=
+	      #modeRequest.userMode09 :=
+	      #modeRequest.userMode10 :=
+	      #modeRequest.userMode11 :=
+	      #modeRequest.userMode12 :=
+	      #modeRequest.userMode13 := FALSE;
+	    END_IF;
+	  END_IF;
+	  
+	  #statLastCycleMode := #currentMode;
+	  
+	END_REGION METHOD CALLED
+	
+	REGION METHOD POST
+	  // Call of the post method block
+	  #OPC_UA_ServerMethodPost_Instance(UAMethod_Result   := #tempPostResult,
+	                                    UAMethod_Finished := #tempPostFinished);
+	  
+	  // Check if error at method occurred
+	  IF (#OPC_UA_ServerMethodPost_Instance.Error = TRUE)
+	    AND (#tempStatus = 16#0000)
+	  THEN
+	    #tempStatus := #ERR_METHOD_POST;
+	    #tempSubfunctionStatus := #OPC_UA_ServerMethodPost_Instance.Status;
+	  END_IF;
+	END_REGION METHOD POST
+	
+	REGION SET OUTPUTS
+	    // Outputs are set according to status and if a call was executed
+	    IF (#tempStatus <> 16#0000) THEN
+	        // Error occurred in call
+	        #status := #tempStatus;
+	        #error := TRUE;
+	        #subfunctionStatus := #tempSubfunctionStatus;
+	        
+	    ELSIF (#tempPostFinished = TRUE) THEN
+	        // Method was executed
+	        #status := #STATUS_EXECUTION_FINISHED;
+	        #error := FALSE;
+	        #subfunctionStatus := 16#0000_0000;
+	        
+	    ELSE
+	        // No call of block was necessary
+	        #status := #STATUS_NO_CALL;
+	        #error := FALSE;
+	        #subfunctionStatus := 16#0000_0000;
+	    END_IF;
+	END_REGION SET OUTPUTS
+	
+END_FUNCTION_BLOCK
+

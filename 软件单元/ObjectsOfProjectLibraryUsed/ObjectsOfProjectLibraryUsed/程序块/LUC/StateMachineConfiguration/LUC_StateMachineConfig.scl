@@ -1,0 +1,164 @@
+﻿FUNCTION "LUC_StateMachineConfig" : Void
+TITLE = LUC_StateMachineConfig
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+VERSION : 0.1
+//This block transforms the boolean configuration done in the DB Configuration of the disabled states and mode transitions into a standard structure.  The standard user defined type _LPMLV2022_typeConfiguration_ will be used in the _LPML_ModeStateManager_ . 
+   VAR_INPUT 
+      stateMachineConfig : "LUC_typeStateMachineConfiguration";   // Configuration of the state machine in a boolean structure
+   END_VAR
+
+   VAR_OUTPUT 
+      lpmlModeStateManagerConfig : "LPMLV2022_typeConfiguration";   // Configuration of the state machine in a DWord structure
+   END_VAR
+
+   VAR_TEMP 
+      tempIndex : Int;   // Temporary variable for loop handling
+      tempUpperBound : Int;   // Temporary variable to save maximum elements of an array
+      tempLowerBound : Int;   // Temporary variable to save minimum elements of an array
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //===============================================================================
+	  // Siemens AG / (c)Copyright 2024
+	  //-------------------------------------------------------------------------------
+	  // Title:            LUC_StateMachineConfig
+	  // Comment/Function: This block transforms the boolean configuration done in the DB Configuration of the disabled states and mode transitions into a standard structure.  The standard user defined type _LPMLV2022_typeConfiguration_ will be used in the _LPML_ModeStateManager_ . 
+	  // Library/Family:   LUC - Library of Unit Control
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      S7-PLCSIM Advanced V6.0 
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     -
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge        | Changes applied
+	  //----------|------------|-------------------------|-----------------------------
+	  // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	  // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | Implemented state model configuration for all possible modes
+	  // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Optimized code.
+	  //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	(/*
+	To obtain the _stateModeManagerConfiguration_ is mandatory to create a __Configuration DB__ where the states and transitions of each mode of the model state should be be configured. 
+	* Modes.
+	The user can define to which modes is permitted to do the mode request change from each mode. The structure to define them is by boolean variables.  
+	* States.
+	The definition of the states of each mode is configured by enabling the states that won't be used per each mode. The structure to define them is by boolean variables.  
+	* Transitions. 
+	The definition of the transitions from which state is allowed to change the mode of a Unit. The structure to define them is by boolean variables. 
+	* Hold.
+	The definition of the states from which the Unit will be able to change into _Hold_ state. The structure to define them is by boolean variables. 
+	* Complete.
+	The definition of the states from which the Unit will be able to change into _Complete_ state. The structure to define them is by boolean variables. 
+	
+	![LUC_DBConfig](ConfigurationDB.png "Configuration StateModelConfig")
+	
+	This block will transform the boolean configuration data into a user data type provided by the LPML library _LPMLV2022_typeConfiguration_ :
+	
+	
+	![LUC_DBConfig](DBConfigResault.png "Configuration StateModelConfig")
+	*/)
+	END_REGION DESCRIPTION
+	
+	REGION EVALUATION 
+	    //Enabled Modes 
+	    // WARNING: The manual mode is mandatory, so it is not needed to assign it in the interface
+	    "LPMLV2022_ConfigureEnabledModesCfg"(ProductionMode := #stateMachineConfig.enableModes.production,
+	                                         MaintenanceMode := #stateMachineConfig.enableModes.maintenance,
+	                                         UserMode01 := #stateMachineConfig.enableModes.userMode01,
+	                                         UserMode02 := #stateMachineConfig.enableModes.userMode02,
+	                                         UserMode03 := #stateMachineConfig.enableModes.userMode03,
+	                                         UserMode04 := #stateMachineConfig.enableModes.userMode04,
+	                                         UserMode05 := #stateMachineConfig.enableModes.userMode05,
+	                                         UserMode06 := #stateMachineConfig.enableModes.userMode06,
+	                                         UserMode07 := #stateMachineConfig.enableModes.userMode07,
+	                                         UserMode08 := #stateMachineConfig.enableModes.userMode08,
+	                                         UserMode09 := #stateMachineConfig.enableModes.userMode09,
+	                                         UserMode10 := #stateMachineConfig.enableModes.userMode10,
+	                                         UserMode11 := #stateMachineConfig.enableModes.userMode11,
+	                                         UserMode12 := #stateMachineConfig.enableModes.userMode12,
+	                                         UserMode13 := #stateMachineConfig.enableModes.userMode13,
+	                                         UserMode14 := FALSE,
+	                                         UserMode15 := FALSE,
+	                                         UserMode16 := FALSE,
+	                                         UserMode17 := FALSE,
+	                                         UserMode18 := FALSE,
+	                                         UserMode19 := FALSE,
+	                                         UserMode20 := FALSE,
+	                                         UserMode21 := FALSE,
+	                                         UserMode22 := FALSE,
+	                                         UserMode23 := FALSE,
+	                                         UserMode24 := FALSE,
+	                                         UserMode25 := FALSE,
+	                                         UserMode26 := FALSE,
+	                                         UserMode27 := FALSE,
+	                                         UserMode28 := FALSE,
+	                                         EnabledModesCfg => #lpmlModeStateManagerConfig.EnabledModesCfg);
+	    
+	    //Configuration of the OMAC State Model per mode
+	    FOR #tempIndex := 0 TO _."LPMLV2022_MAX_MODES_UPPER_LIM" DO
+	        // Mode 0 is defined as Mode_Invalid and not uused
+	        //State Configuration. Configuration of active states depending on the mode.
+	        "LPMLV2022_ConfigureDisabledStatesCfg"(Clearing := NOT #stateMachineConfig.enableStates[#tempIndex].clearing,
+	                                               Starting := NOT #stateMachineConfig.enableStates[#tempIndex].starting,
+	                                               Suspended := NOT #stateMachineConfig.enableStates[#tempIndex].suspended,
+	                                               Stopping := NOT #stateMachineConfig.enableStates[#tempIndex].stopping,
+	                                               Aborting := NOT #stateMachineConfig.enableStates[#tempIndex].aborting,
+	                                               Holding := NOT #stateMachineConfig.enableStates[#tempIndex].holding,
+	                                               Held := NOT #stateMachineConfig.enableStates[#tempIndex].held,
+	                                               Unholding := NOT #stateMachineConfig.enableStates[#tempIndex].unholding,
+	                                               Suspending := NOT #stateMachineConfig.enableStates[#tempIndex].suspending,
+	                                               Unsuspending := NOT #stateMachineConfig.enableStates[#tempIndex].unsuspending,
+	                                               Resetting := NOT #stateMachineConfig.enableStates[#tempIndex].resetting,
+	                                               Completing := NOT #stateMachineConfig.enableStates[#tempIndex].completing,
+	                                               Completed := NOT #stateMachineConfig.enableStates[#tempIndex].completed,
+	                                               DisabledStatesCfg => #lpmlModeStateManagerConfig.DisabledStatesCfg[#tempIndex]);
+	        
+	        //Transition Configuration. Configuration of in which states is allowed to change the mode of the unit.
+	        "LPMLV2022_ConfigureModeTransitionCfg"(Clearing := #stateMachineConfig.enableModeTransitions[#tempIndex].clearing,
+	                                               Stopped := #stateMachineConfig.enableModeTransitions[#tempIndex].stopped,
+	                                               Starting := #stateMachineConfig.enableModeTransitions[#tempIndex].starting,
+	                                               Idle := #stateMachineConfig.enableModeTransitions[#tempIndex].idle,
+	                                               Suspended := #stateMachineConfig.enableModeTransitions[#tempIndex].suspended,
+	                                               Execute := #stateMachineConfig.enableModeTransitions[#tempIndex].execute,
+	                                               Stopping := #stateMachineConfig.enableModeTransitions[#tempIndex].stopping,
+	                                               Aborting := #stateMachineConfig.enableModeTransitions[#tempIndex].aborting,
+	                                               Aborted := #stateMachineConfig.enableModeTransitions[#tempIndex].aborted,
+	                                               Holding := #stateMachineConfig.enableModeTransitions[#tempIndex].holding,
+	                                               Held := #stateMachineConfig.enableModeTransitions[#tempIndex].held,
+	                                               Unholding := #stateMachineConfig.enableModeTransitions[#tempIndex].unholding,
+	                                               Suspending := #stateMachineConfig.enableModeTransitions[#tempIndex].suspending,
+	                                               Unsuspending := #stateMachineConfig.enableModeTransitions[#tempIndex].unsuspending,
+	                                               Resetting := #stateMachineConfig.enableModeTransitions[#tempIndex].resetting,
+	                                               Completing := #stateMachineConfig.enableModeTransitions[#tempIndex].completing,
+	                                               Completed := #stateMachineConfig.enableModeTransitions[#tempIndex].completed,
+	                                               ModeTransitionCfg => #lpmlModeStateManagerConfig.ModeTransitionCfg[#tempIndex]);
+	    END_FOR;
+	    
+	    //Hold Command Configuration. Configuration from which states is allowed to send an _Hold_ command and change to _Holding_ state. 
+	    "LPMLV2022_ConfigureHoldCmdCfg"(Starting := #stateMachineConfig.enableHoldCommand.starting,
+	                                    Idle := #stateMachineConfig.enableHoldCommand.idle,
+	                                    Suspended := #stateMachineConfig.enableHoldCommand.suspended,
+	                                    Execute := #stateMachineConfig.enableHoldCommand.execute,
+	                                    Unholding := #stateMachineConfig.enableHoldCommand.unholding,
+	                                    Suspending := #stateMachineConfig.enableHoldCommand.suspending,
+	                                    Unsuspending := #stateMachineConfig.enableHoldCommand.unsuspending,
+	                                    Completing := #stateMachineConfig.enableHoldCommand.completing,
+	                                    Completed := #stateMachineConfig.enableHoldCommand.completed,
+	                                    holdCmdCfg => #lpmlModeStateManagerConfig.holdCmdCfg);
+	    
+	    //Complete Command Configuration. Configuration from which states is allowed to send a _Complete_ command and change to _Completing_ state. 
+	    "LPMLV2022_ConfigureCompleteCmdCfg"(Suspended := #stateMachineConfig.enableCompleteCommand.suspended,
+	                                        Execute := #stateMachineConfig.enableCompleteCommand.execute,
+	                                        Held := #stateMachineConfig.enableCompleteCommand.held,
+	                                        completeCmdCfg => #lpmlModeStateManagerConfig.completeCmdCfg);
+	END_REGION
+	
+END_FUNCTION
+

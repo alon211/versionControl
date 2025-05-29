@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="clearing" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Clearing</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="stopped" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Stopped</MultiLanguageText>
+      </Comment>
+      <StartValue>true</StartValue>
+    </Member>
+    <Member Name="starting" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Starting</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="idle" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Idle</MultiLanguageText>
+      </Comment>
+      <StartValue>true</StartValue>
+    </Member>
+    <Member Name="suspended" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Suspended</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="execute" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Execute</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="stopping" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Stopping</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="aborting" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Aborting</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="aborted" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Aborted</MultiLanguageText>
+      </Comment>
+      <StartValue>true</StartValue>
+    </Member>
+    <Member Name="holding" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Holding</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="held" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Held</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="unholding" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Unholding</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="suspending" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Suspending</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="unsuspending" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Unsuspending</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="resetting" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Resetting</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="completing" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Completing</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="completed" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Allow a mode transition to/from state Completed</MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>LUC_typeModeTransitionConfiguration</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>Configure in which states a mode transition is allowed</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <MultilingualText ID="9" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="A" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="B" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="C" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="D" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="E" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="F" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="10" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

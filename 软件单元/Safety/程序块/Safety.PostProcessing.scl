@@ -1,0 +1,14 @@
+﻿NAMESPACE Safety
+FUNCTION PostProcessing : Void
+TITLE = PostProcessing
+{ S7_Optimized_Access := 'TRUE' ; Published := 'FALSE' }
+AUTHOR : 'Siemens AG'
+VERSION : 0.1
+
+BEGIN
+	//Set ACK_OP value in DataToSafety DB
+	_.Safety.DataToSafety.ackSafetyFromHmi := _.Safety.DataFromStandard.ackSafetyFromHmi;
+	_.Safety.DataFromSafety.ackOP_changeRequired := "_".Safety.Main_Safety_RTG1_DB.instAckOP.Q;
+END_FUNCTION
+END_NAMESPACE
+

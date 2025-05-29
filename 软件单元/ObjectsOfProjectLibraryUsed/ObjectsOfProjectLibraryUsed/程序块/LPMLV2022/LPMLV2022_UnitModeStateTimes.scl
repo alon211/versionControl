@@ -1,0 +1,241 @@
+﻿FUNCTION_BLOCK "LPMLV2022_UnitModeStateTimes"
+TITLE = LPMLV2022_UnitModeStateTimes
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : APC_ERLF
+FAMILY : OMAC
+VERSION : 1.0
+//Determination of unit modes and states times (current and also cumulative times)
+   VAR_INPUT 
+      UnitModeCurrent : DInt := "LPMLV2022_MODE_INVALID";   // Current unit mode
+      StateCurrent : DInt := "LPMLV2022_STATE_UNDEFINED";   // Current state
+      resetTimes : Bool;   // State change from FALSE to TRUE (rising edge) resets unit mode/state times and cumulative times
+   END_VAR
+
+   VAR_OUTPUT 
+      ModeTimeCurrent { ExternalWritable := 'False'} : DInt;   // Actual time for current mode in seconds
+      StateTimeCurrent { ExternalWritable := 'False'} : DInt;   // Actual time for current state in seconds
+   END_VAR
+   VAR_OUTPUT RETAIN
+      AccTimeSinceReset { ExternalWritable := 'False'} : DInt;   // Accumulated time since last reset in seconds
+   END_VAR
+   VAR_OUTPUT 
+      actualTimeAllModes { ExternalWritable := 'False'} : Array[0.."LPMLV2022_MODES_UPPER_LIM"] of DInt;   // Actual time for all modes in seconds (former name: ModeCurrentTime)
+   END_VAR
+   VAR_OUTPUT RETAIN
+      cumulativeTimeAllModes { ExternalWritable := 'False'} : Array[0.."LPMLV2022_MODES_UPPER_LIM"] of DInt;   // Cumulative time for all modes in seconds (former name: ModeCumulativeTime)
+   END_VAR
+   VAR_OUTPUT 
+      actualTimeAllStatesOfAllModes { ExternalWritable := 'False'} : Array[0.."LPMLV2022_MODES_UPPER_LIM", 0.."LPMLV2022_STATES_UPPER_LIM"] of DInt;   // Actual time for all states in seconds (former name: StateCurrentTime)
+   END_VAR
+   VAR_OUTPUT RETAIN
+      cumulativeTimeAllStatesOfAllModes { ExternalWritable := 'False'} : Array[0.."LPMLV2022_MODES_UPPER_LIM", 0.."LPMLV2022_STATES_UPPER_LIM"] of DInt;   // Cumulative time for all states in seconds (former name: StateCumulativeTime)
+   END_VAR
+   VAR_OUTPUT 
+      actualTimeAllStatesOfCurrentMode { ExternalWritable := 'False'} : Array[0.."LPMLV2022_STATES_UPPER_LIM"] of DInt;   // Actual time for all states in current mode in seconds
+      cumulativeTimeAllStatesOfCurrentMode { ExternalWritable := 'False'} : Array[0.."LPMLV2022_STATES_UPPER_LIM"] of DInt;   // Cumulative time for all states in current mode in seconds
+      cumulativeTimeCurrentMode { ExternalWritable := 'False'} : DInt;   // Cumulative time for current mode in seconds
+   END_VAR
+
+   VAR 
+      statUnitModeCurrentOld { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt := "LPMLV2022_MODE_INVALID";   // For edge detection
+      statStateCurrentOld { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt := "LPMLV2022_STATE_UNDEFINED";   // For edge detection
+      statResetTimesOld { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // For edge detection
+      statStartingPointMeasureRuntime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : LReal;   // Saved value of runtime system function
+      statRuntime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : LReal;   // Runtime variable
+      statFirstCycle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := TRUE;   // First cycle of run
+      statCurrentModeCurrentTime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Actual time for current mode in seconds
+      statCurrentStateCurrentTime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Actual time for current state in seconds
+   END_VAR
+
+   VAR_TEMP 
+      tempI : DInt;   // Loop counter
+      tempJ : DInt;   // Loop counter
+      tempMeasuredRuntime : LReal;   // Return value of RUNTIME instruction
+      tempRuntimeIntegerPart : DInt;   // Runtime variable (integer part)
+      tempUnitModeCurrent : DInt;   // Verified input value
+      tempStateCurrent : DInt;   // Verified input value
+   END_VAR
+
+
+BEGIN
+	
+	    REGION HEADER
+	        //===============================================================================
+	        // Siemens AG / (c)Copyright 2023
+	        //-------------------------------------------------------------------------------
+	        // Title:            FB LPMLV2022_UnitModeStateTimes (FB 30112)
+	        // Comment/Function: Determination of unit modes and states times (current and also
+	        //                   cumulative times)
+	        // Library/Family:   LPMLV2022
+	        // Author:           APC_ERLF
+	        // Tested with:      S7-1211 with FW version V4.2, S7-1511-1 PN with FW version V2.6
+	        // Engineering:      TIA Portal V19
+	        // Restrictions:     -
+	        // Requirements:     S7-1200 FW 4.2 / S7-1500 FW 2.6
+	        //-------------------------------------------------------------------------------
+	        // Change log table:
+	        // Version  | Date       | Expert in charge        | Changes applied
+	        //----------|------------|-------------------------|-----------------------------
+	        // 01.00.00 | 28.02.2023 | KT                      | First released version
+	        //===============================================================================
+	    END_REGION
+	    
+	    
+	    REGION DESCRIPTION
+	(/*
+	The function block _LPMLV2022_UnitModeStateTimes_ is optional and counts the 
+	time in seconds for every state in every unit mode.
+	
+	NOTE
+	:   The value of the constant LPMLV2022_MODES_UPPER_LIM must correspond 
+	to the number of modes which are actually used.
+	
+	---  
+	
+	NOTE
+	:   When compiling this block, 6 warnings are issued. These can be ignored.
+	
+	*/)
+	        
+	        
+	    END_REGION ;
+	
+	IF #statFirstCycle OR (#resetTimes AND NOT #statResetTimesOld) THEN
+	  // Reset times structures
+	  #statCurrentModeCurrentTime  := 0;
+	  #statCurrentStateCurrentTime := 0;
+	
+	  FOR #tempI := _."LPMLV2022_MODE_INVALID" TO _."LPMLV2022_MODES_UPPER_LIM" DO
+	    #actualTimeAllModes[#tempI] := 0;
+	    IF NOT #statFirstCycle THEN // Do only with rising edge at resetTimes
+	      #cumulativeTimeAllModes[#tempI] := 0;
+	    END_IF;
+	
+	    FOR #tempJ := _."LPMLV2022_STATE_UNDEFINED" TO _."LPMLV2022_STATES_UPPER_LIM" DO
+	      #actualTimeAllStatesOfAllModes[#tempI, #tempJ] := 0;
+	      IF NOT #statFirstCycle THEN // Do only with rising edge at resetTimes
+	        #cumulativeTimeAllStatesOfAllModes[#tempI, #tempJ] := 0;
+	      END_IF;
+	    END_FOR;
+	  END_FOR;
+	
+	  IF NOT #statFirstCycle THEN // Do only with rising edge at resetTimes
+	    #AccTimeSinceReset := 0;
+	  END_IF;
+	  
+	  // Reset additional outputs
+	  #ModeTimeCurrent  := 0;
+	  #StateTimeCurrent := 0;
+	
+	  IF NOT #statFirstCycle THEN // Do only with rising edge at resetTimes
+	    #cumulativeTimeCurrentMode := 0;
+	  END_IF;
+	
+	  FOR #tempI := _."LPMLV2022_STATE_UNDEFINED" TO _."LPMLV2022_STATES_UPPER_LIM" DO
+	    #actualTimeAllStatesOfCurrentMode[#tempI] := 0;
+	    IF NOT #statFirstCycle THEN // Do only with rising edge at resetTimes
+	      #cumulativeTimeAllStatesOfCurrentMode[#tempI] := 0;
+	    END_IF;
+	  END_FOR;
+	
+	  // Set starting point for calculation of elapsed seconds
+	  #tempMeasuredRuntime := RUNTIME(#statStartingPointMeasureRuntime);
+	  #statRuntime := 0.0;
+	  
+	  IF #statFirstCycle THEN
+	    #statFirstCycle := FALSE;
+	    RETURN; // Nothing else in this cycle to avoid runtime peaks
+	  END_IF;
+	END_IF;
+	
+	// Inputs UnitModeCurrent and StateCurrent
+	#tempUnitModeCurrent := #UnitModeCurrent;
+	#tempStateCurrent    := #StateCurrent;
+	
+	// Measure program runtime
+	#tempMeasuredRuntime := RUNTIME(#statStartingPointMeasureRuntime);
+	IF #tempMeasuredRuntime > 0.0 THEN // Value OK
+	  #statRuntime := #statRuntime + #tempMeasuredRuntime;
+	END_IF;
+	
+	// Check if at least one second has been reached
+	IF #statRuntime > 1.0 THEN
+	  #tempRuntimeIntegerPart := TRUNC_DINT(#statRuntime);
+	  
+	  IF #statUnitModeCurrentOld >= _."LPMLV2022_MODE_INVALID" AND #statUnitModeCurrentOld <= _."LPMLV2022_MODES_UPPER_LIM" THEN
+	    // DINT overflow is not taken into account, because DINT in seconds means approx. 68 years
+	    //#ModeCurrentTime[#statUnitModeCurrentOld] := #ModeCurrentTime[#statUnitModeCurrentOld] + #tempRuntimeIntegerPart;
+	    #statCurrentModeCurrentTime := #statCurrentModeCurrentTime + #tempRuntimeIntegerPart;
+	    #actualTimeAllModes[#statUnitModeCurrentOld] := #statCurrentModeCurrentTime;
+	    #cumulativeTimeAllModes[#statUnitModeCurrentOld] := #cumulativeTimeAllModes[#statUnitModeCurrentOld] + #tempRuntimeIntegerPart;
+	    
+	    IF #statStateCurrentOld >= _."LPMLV2022_STATE_UNDEFINED" AND #statStateCurrentOld <= _."LPMLV2022_STATES_UPPER_LIM" THEN
+	      // DINT overflow is not taken into account, because DINT in seconds means approx. 68 years
+	      #statCurrentStateCurrentTime := #statCurrentStateCurrentTime + #tempRuntimeIntegerPart;
+	      #actualTimeAllStatesOfAllModes[#statUnitModeCurrentOld, #statStateCurrentOld] := #statCurrentStateCurrentTime;
+	      #cumulativeTimeAllStatesOfAllModes[#statUnitModeCurrentOld, #statStateCurrentOld] := #cumulativeTimeAllStatesOfAllModes[#statUnitModeCurrentOld, #statStateCurrentOld] + #tempRuntimeIntegerPart;
+	    END_IF;
+	  END_IF;
+	
+	  // DINT overflow is not taken into account, because DINT in seconds means approx. 68 years
+	  #AccTimeSinceReset := #AccTimeSinceReset + #tempRuntimeIntegerPart;
+	
+	  #statRuntime := #statRuntime - #tempRuntimeIntegerPart; // Fractional part of runtime variable for next cycle
+	END_IF;
+	
+	// Check if new unitMode is selected
+	IF #tempUnitModeCurrent <> #statUnitModeCurrentOld THEN
+	  IF #tempUnitModeCurrent >= _."LPMLV2022_MODE_INVALID" AND #tempUnitModeCurrent <= _."LPMLV2022_MODES_UPPER_LIM" THEN
+	    #statCurrentModeCurrentTime := 0;
+	    #actualTimeAllModes[#tempUnitModeCurrent] := 0;
+	    IF #tempStateCurrent >= _."LPMLV2022_STATE_UNDEFINED" AND #tempStateCurrent <= _."LPMLV2022_STATES_UPPER_LIM" THEN
+	      #statCurrentStateCurrentTime := 0;
+	      #actualTimeAllStatesOfAllModes[#tempUnitModeCurrent, #tempStateCurrent] := 0;
+	    END_IF;
+	  END_IF;
+	  
+	  // Check if new state is selected  
+	ELSIF #tempStateCurrent <> #statStateCurrentOld THEN
+	  IF #tempUnitModeCurrent >= _."LPMLV2022_MODE_INVALID" AND #tempUnitModeCurrent <= _."LPMLV2022_MODES_UPPER_LIM" AND
+	    #tempStateCurrent >= _."LPMLV2022_STATE_UNDEFINED" AND #tempStateCurrent <= _."LPMLV2022_STATES_UPPER_LIM"
+	  THEN
+	    #statCurrentStateCurrentTime := 0;
+	    #actualTimeAllStatesOfAllModes[#tempUnitModeCurrent, #tempStateCurrent] := 0;
+	  END_IF;
+	END_IF;
+	
+	// Update additional outputs
+	IF #tempUnitModeCurrent >= _."LPMLV2022_MODE_INVALID" AND #tempUnitModeCurrent <= _."LPMLV2022_MODES_UPPER_LIM" THEN
+	  #ModeTimeCurrent           := #statCurrentModeCurrentTime;
+	  #cumulativeTimeCurrentMode := #cumulativeTimeAllModes[#tempUnitModeCurrent];
+	
+	  IF #tempStateCurrent >= _."LPMLV2022_STATE_UNDEFINED" AND #tempStateCurrent <= _."LPMLV2022_STATES_UPPER_LIM" THEN
+	    #StateTimeCurrent := #statCurrentStateCurrentTime;
+	    #actualTimeAllStatesOfCurrentMode := #actualTimeAllStatesOfAllModes[#tempUnitModeCurrent];
+	    #cumulativeTimeAllStatesOfCurrentMode := #cumulativeTimeAllStatesOfAllModes[#tempUnitModeCurrent];
+	  ELSE
+	    #StateTimeCurrent := 0;
+	
+	    FOR #tempI := _."LPMLV2022_STATE_UNDEFINED" TO _."LPMLV2022_STATES_UPPER_LIM" DO
+	      #actualTimeAllStatesOfCurrentMode[#tempI]     := 0;
+	      #cumulativeTimeAllStatesOfCurrentMode[#tempI] := 0;
+	    END_FOR;
+	  END_IF;
+	
+	ELSE
+	  #ModeTimeCurrent  := 0;
+	  #StateTimeCurrent := 0;
+	  #cumulativeTimeCurrentMode := 0;
+	  
+	  FOR #tempI := _."LPMLV2022_STATE_UNDEFINED" TO _."LPMLV2022_STATES_UPPER_LIM" DO
+	    #actualTimeAllStatesOfCurrentMode[#tempI]     := 0;
+	    #cumulativeTimeAllStatesOfCurrentMode[#tempI] := 0;
+	  END_FOR;
+	END_IF;
+	
+	// Save values for state change detection
+	#statUnitModeCurrentOld := #tempUnitModeCurrent;
+	#statStateCurrentOld    := #tempStateCurrent;
+	#statResetTimesOld := #resetTimes;
+END_FUNCTION_BLOCK
+

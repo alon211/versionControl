@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="referenceDesignator" Datatype="WString[128]">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Name or reference designator of the drive object that is shown in HMI (value is assigned in startup OB; if value is default value, than HMI shows name of TO; if no TO is used, than HMI schows an empty string)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="axisDB" Datatype="DB_ANY">
+      <Comment>
+        <MultiLanguageText Lang="en-US">DB number of technology object (value is assigned in startup OB; if no TO is used, axisDB = 0)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="sinaType" Datatype="UInt">
+      <Comment>
+        <MultiLanguageText Lang="en-US">0=NO_TYPE, 114=G120, 124=S120, 125=S120_EPOS, 220=S200, 221=S200_EPOS, 222=S210, 223=S210_EPOS</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="sinaHwID" Datatype="HW_IO">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Identification of PROFINET IO device or DP slave for the Sinamics drive object (value is assigned in startup OB)</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="sinaDriveObjectNo" Datatype="USInt">
+      <Comment>
+        <MultiLanguageText Lang="en-US">Sinamics drive object number (value is assigned in startup OB; if drive is single-axis, drive object numer  = 1)</MultiLanguageText>
+      </Comment>
+      <StartValue>1</StartValue>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>LAF_typeDriveDiagConfig</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>Technology Object and Sinamics configuration structure for drive diagnostic. Structure is designed to use for an array.</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <MultilingualText ID="9" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="A" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>LAF_typeDriveDiagConfig</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="B" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="C" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="D" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="E" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="F" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="10" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

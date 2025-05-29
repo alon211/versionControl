@@ -1,0 +1,134 @@
+﻿FUNCTION "LPMLV2022_ConfigureEnabledModesCfg" : Void
+TITLE = LPMLV2022_ConfigureEnabledModesCfg
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : APC_ERLF
+FAMILY : OMAC
+VERSION : 1.0
+//The function generates the unit mode configuration as DWord.
+   VAR_INPUT 
+      ProductionMode : Bool;   // TRUE: Enable unit mode Production
+      MaintenanceMode : Bool;   // TRUE: Enable unit mode Maintenance
+      UserMode01 : Bool;   // TRUE: Enable user-defined unit mode 01
+      UserMode02 : Bool;   // TRUE: Enable user-defined unit mode 02
+      UserMode03 : Bool;   // TRUE: Enable user-defined unit mode 03
+      UserMode04 : Bool;   // TRUE: Enable user-defined unit mode 04
+      UserMode05 : Bool;   // TRUE: Enable user-defined unit mode 05
+      UserMode06 : Bool;   // TRUE: Enable user-defined unit mode 06
+      UserMode07 : Bool;   // TRUE: Enable user-defined unit mode 07
+      UserMode08 : Bool;   // TRUE: Enable user-defined unit mode 08
+      UserMode09 : Bool;   // TRUE: Enable user-defined unit mode 09
+      UserMode10 : Bool;   // TRUE: Enable user-defined unit mode 10
+      UserMode11 : Bool;   // TRUE: Enable user-defined unit mode 11
+      UserMode12 : Bool;   // TRUE: Enable user-defined unit mode 12
+      UserMode13 : Bool;   // TRUE: Enable user-defined unit mode 13
+      UserMode14 : Bool;   // TRUE: Enable user-defined unit mode 14
+      UserMode15 : Bool;   // TRUE: Enable user-defined unit mode 15
+      UserMode16 : Bool;   // TRUE: Enable user-defined unit mode 16
+      UserMode17 : Bool;   // TRUE: Enable user-defined unit mode 17
+      UserMode18 : Bool;   // TRUE: Enable user-defined unit mode 18
+      UserMode19 : Bool;   // TRUE: Enable user-defined unit mode 19
+      UserMode20 : Bool;   // TRUE: Enable user-defined unit mode 20
+      UserMode21 : Bool;   // TRUE: Enable user-defined unit mode 21
+      UserMode22 : Bool;   // TRUE: Enable user-defined unit mode 22
+      UserMode23 : Bool;   // TRUE: Enable user-defined unit mode 23
+      UserMode24 : Bool;   // TRUE: Enable user-defined unit mode 24
+      UserMode25 : Bool;   // TRUE: Enable user-defined unit mode 25
+      UserMode26 : Bool;   // TRUE: Enable user-defined unit mode 26
+      UserMode27 : Bool;   // TRUE: Enable user-defined unit mode 27
+      UserMode28 : Bool;   // TRUE: Enable user-defined unit mode 28
+   END_VAR
+
+   VAR_OUTPUT 
+      EnabledModesCfg : DWord;   // Enabled unit modes configuration
+   END_VAR
+
+
+BEGIN
+	REGION HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2023
+	    //-------------------------------------------------------------------------------
+	    // Title:            FC LPMLV2022_ConfigureEnabledModesCfg (FC 30110)
+	    // Comment/Function: The function generates the unit mode configuration as DWord.
+	    // Library/Family:   LPMLV2022
+	    // Author:           APC_ERLF
+	    // Tested with:      S7-1211 with FW version V4.2, S7-1511-1 PN with FW version V2.6
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     S7-1200 FW 4.2 / S7-1500 FW 2.6
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 28.02.2023 | KT                      | First released version
+	    //===============================================================================    
+	    
+	END_REGION
+	
+	
+	REGION DESCRIPTION
+	    (/*
+	This function allows the user to set the unit mode configuration for the FB 
+	_LPMLV2022_UnitModeStateManager_ and the FB 
+	_LPMLV2022_UnitModeStateManagerBool_ easily. Of course, it is also possible to 
+	set the unit mode configuration directly in the FB 
+	_LPMLV2022_UnitModeStateManager_ configuration.
+	
+	With the function, the user has to set the associated inputs for the different unit 
+	modes to “TRUE”, e.g. _“MaintenanceMode := TRUE”_ for enabling the unit mode 
+	_Maintenance_.
+	
+	To write the unit mode configuration from the function output to the according _“Unit 
+	Mode and State Manager”_, the output _EnabledModesCfg_ has to be assigned to the 
+	configuration of the corresponding FB _LPMLV2022_UnitModeStateManager_.
+	
+	
+	NOTE
+	:   The unit mode _Manual_ is mandatory and is therefore always enabled, i.e. no 
+	input exists at the FC _LPMLV2022_ConfigureEnabledModesCfg_ for mode 
+	_Manual_. If the mode _Manual_ is nevertheless disabled at the _“Unit Mode and State 
+	Manager”_, it will automatically be enabled.
+	*/)
+	    
+	    
+	    
+	    
+	    
+	END_REGION
+	
+	// Initialize unitMode configuration
+	#EnabledModesCfg := 16#0000_0008; // Note: mode Manual (EnabledModesCfg.%X3) is mandatory
+	
+	// Set unitMode configuration
+	#EnabledModesCfg.%X1  := #ProductionMode;
+	#EnabledModesCfg.%X2  := #MaintenanceMode;
+	#EnabledModesCfg.%X4  := #UserMode01;
+	#EnabledModesCfg.%X5  := #UserMode02;
+	#EnabledModesCfg.%X6  := #UserMode03;
+	#EnabledModesCfg.%X7  := #UserMode04;
+	#EnabledModesCfg.%X8  := #UserMode05;
+	#EnabledModesCfg.%X9  := #UserMode06;
+	#EnabledModesCfg.%X10 := #UserMode07;
+	#EnabledModesCfg.%X11 := #UserMode08;
+	#EnabledModesCfg.%X12 := #UserMode09;
+	#EnabledModesCfg.%X13 := #UserMode10;
+	#EnabledModesCfg.%X14 := #UserMode11;
+	#EnabledModesCfg.%X15 := #UserMode12;
+	#EnabledModesCfg.%X16 := #UserMode13;
+	#EnabledModesCfg.%X17 := #UserMode14;
+	#EnabledModesCfg.%X18 := #UserMode15;
+	#EnabledModesCfg.%X19 := #UserMode16;
+	#EnabledModesCfg.%X20 := #UserMode17;
+	#EnabledModesCfg.%X21 := #UserMode18;
+	#EnabledModesCfg.%X22 := #UserMode19;
+	#EnabledModesCfg.%X23 := #UserMode20;
+	#EnabledModesCfg.%X24 := #UserMode21;
+	#EnabledModesCfg.%X25 := #UserMode22;
+	#EnabledModesCfg.%X26 := #UserMode23;
+	#EnabledModesCfg.%X27 := #UserMode24;
+	#EnabledModesCfg.%X28 := #UserMode25;
+	#EnabledModesCfg.%X29 := #UserMode26;
+	#EnabledModesCfg.%X30 := #UserMode27;
+	#EnabledModesCfg.%X31 := #UserMode28;
+END_FUNCTION
+

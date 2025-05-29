@@ -1,0 +1,152 @@
+﻿FUNCTION "LAF_SetDriveObjectConfig" : Void
+TITLE = LAF_SetDriveObjectConfig
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LAF
+VERSION : 1.2
+//This block sets the configuration data of a drive object for the drive diagnostic in the configuration array dependig on the parameterized index and the input values during startup.
+   VAR_INPUT 
+      index { S7_PredefinedAssignment := '0'} : DInt;   // Index that specifies which drive object in the 'configuration' array is set
+      referenceDesignator { S7_PredefinedAssignment := '$'$''} : WString;   // Name or reference designator of the drive object that is shown in HMI (if value is default value, than HMI shows name of TO; if no TO is used, than HMI schows an empty string; max. length = 128 chars)
+      axisDB { S7_PredefinedAssignment := '0'} : DB_ANY;   // DB of technology object (if no TO is used, axisDB = 0)
+      sinaType { S7_PredefinedAssignment := '0'} : UInt;   // 0=NO_TYPE, 114=G120, 124=S120, 125=S120_EPOS, 220=S200, 221=S200_EPOS, 222=S210, 223=S210_EPOS
+      sinaHwID { S7_PredefinedAssignment := '999'} : HW_IO;   // Identification of PROFINET IO device or DP slave for the Sinamics drive object
+      sinaDriveObjectNo { S7_PredefinedAssignment := '1'} : USInt;   // Sinamics drive object number (if drive is single-axis, drive object numer  = 1)
+   END_VAR
+
+   VAR_OUTPUT 
+      error { S7_PredefinedAssignment := 'tempError'} : Bool;   // An error occurred during the execution of the FC
+      status { S7_PredefinedAssignment := 'tempStatus'} : Word;   // 16#0000 - 16#7FFF: Status of the FC, 16#8000 - 16#FFFF: Error identification
+      diagnostics { S7_PredefinedAssignment := 'tempDiagnostics'} : "LAF_typeDiagnosticsSimple";   // Diagnostics information
+   END_VAR
+
+   VAR_IN_OUT 
+      configuration { S7_PredefinedAssignment := 'DriveDiagConfig.driveObjects'} : Array[*] of "LAF_typeDriveDiagConfig";
+   END_VAR
+
+   VAR_TEMP 
+      tempDiagnostic : "LAF_typeDiagnosticsSimple";   // temp diagnostic type to store internal diagnostic data like status and return value of called FCs and system blocks
+      tempConfig : "LAF_typeDriveDiagConfig";
+      tempDriveIndex : DInt;   // Temporary value for input 'index'
+      tempArrayMin : DInt;   // Lower bound of configuration array
+      tempArrayMax : DInt;   // Upper bound of configuration array
+      tempAxisDB : DB_ANY;   // Temporary value for input 'axisDB'
+      tempDriveObjectNo : USInt;   // Temporary value for input 'sinaDriveObjectNo'
+      tempLenRefDesignator : Int;   // String length of input 'referenceDesignator'
+      tempReferenceDesignator : WString;   // Temporary value of 'referenceDesignator' for internal checks
+   END_VAR
+
+   VAR CONSTANT 
+      STATUS_FINISHED_NO_ERROR : Word := 16#0000;   // NO error - execution finished without errors
+      SUB_STATUS_NO_ERROR : Word := 16#0000;   // NO error occurred in sub function call
+      ERR_UNDEFINED : Word := 16#8000;   // Error: due to an undefined case
+      STATUS_WARN_LEN_STRING_REF_DESIGNATOR : Word := 16#7005;   // Function finished with warning. Configuration is set. String length of input 'referenceDesignator' is too long. String in 'configuration' is cut
+      STATUS_WARN_DO_NO_SINGLE_AXIS : Word := 16#7006;   // Function finished with warning. Configuration is set. Sinamics drive object number is set to single-axis
+      STATUS_ERR_ARRY_MIN : Word := 16#9001;   // Function finished with error. No configuration is set. Existing configuration is not overwritten. Index violated lower bound of the 'configuration' array
+      STATUS_ERR_ARRY_MAX : Word := 16#9002;   // Function finished with error. No configuration is set. Existing configuration is not overwritten. Index violated upper bound of the 'configuration' array
+      DIM_ARRAY_CONFIG : UDInt := 1;   // Dimension of the configuration array
+      NO_AXIS : UInt := 0;   // No axis specified (axisDB = 0)
+      DO_NO_SINGLE_AXIS : USInt := 1;   // Sinamics drive object number for a single-axis drive
+      LEN_MAX_STRING_REF_DESIGNATOR : Int := 128;   // Maximum length for string 'referenceDesignator'
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2024
+	    //-------------------------------------------------------------------------------
+	    // Title:            LAF_SetDriveObjectConfig
+	    // Comment/Function: This block sets the configuration data of a drive object
+	    //                   for the drive diagnostic in the configuration array dependig
+	    //                   on the parameterized index and the input values during startup.
+	    // Library/Family:   Automation Framework / Drive Diagnostic
+	    // Author:           Siemens Digital Industries
+	    // Tested with:      S7-PLCSIM Advanced V6.0 
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     -
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	    // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | Block interface updated
+	    // 01.02.00 | 30.09.2024 | SIMATIC Systems Support | Block information properties updated
+	    //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	(/*
+	This block sets the configuration data of a drive object for the drive diagnostic. 
+	The set configuration data depends on the parameterized index and the input values.
+	It is recommended to call this function in a startup OB to reduce system load at runtime.
+	*/)
+	END_REGION DESCRIPTION
+	
+	REGION INITIALISATION  
+	  // Initialize status  
+	  #tempDiagnostic.status := #STATUS_FINISHED_NO_ERROR;
+	  #tempDiagnostic.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	  // Work with temporary values / create process image   
+	  #tempDriveIndex := #index;
+	  #tempReferenceDesignator := #referenceDesignator;
+	  #tempAxisDB := #axisDB;
+	  #tempDriveObjectNo := #sinaDriveObjectNo;
+	  // Initialize boundaries of configuration array
+	  #tempArrayMin := LOWER_BOUND(ARR := #configuration, DIM := #DIM_ARRAY_CONFIG);
+	  #tempArrayMax := UPPER_BOUND(ARR := #configuration, DIM := #DIM_ARRAY_CONFIG);
+	END_REGION INITIALISATION  
+	
+	REGION PROGRAM LOGIC
+	  // Error when index is off boundaries --> set block status
+	  IF (#tempDriveIndex < #tempArrayMin) THEN
+	    #tempDiagnostic.status := #STATUS_ERR_ARRY_MIN;
+	    #tempDiagnostic.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	  ELSIF (#tempDriveIndex > #tempArrayMax) THEN
+	    #tempDiagnostic.status := #STATUS_ERR_ARRY_MAX;
+	    #tempDiagnostic.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	  ELSE
+	    
+	    // Try to set reference designator to the name of the technology object
+	    IF (#tempReferenceDesignator = WSTRING#'') AND (#tempAxisDB <> #NO_AXIS) THEN
+	      #tempReferenceDesignator := GetSymbolName(variable := #axisDB, size := #LEN_MAX_STRING_REF_DESIGNATOR);
+	    END_IF;
+	    
+	    // Warning when string length of reference designator is too long --> set block status
+	    #tempLenRefDesignator := LEN(#tempReferenceDesignator);
+	    IF (#tempLenRefDesignator > #LEN_MAX_STRING_REF_DESIGNATOR) THEN
+	      #tempDiagnostic.status := #STATUS_WARN_LEN_STRING_REF_DESIGNATOR;
+	      #tempDiagnostic.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	    END_IF;
+	  
+	    // Warning when sinamics drive object number is not valid --> set to single-axis drive + set block status
+	    IF #tempDriveObjectNo < #DO_NO_SINGLE_AXIS THEN
+	      #tempDriveObjectNo := #DO_NO_SINGLE_AXIS;
+	      #tempDiagnostic.status := #STATUS_WARN_DO_NO_SINGLE_AXIS;
+	      #tempDiagnostic.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	    END_IF;
+	    
+	    // Assign application specific values to temporary values
+	    #tempConfig.referenceDesignator := #tempReferenceDesignator;
+	    #tempConfig.axisDB := #tempAxisDB;
+	    #tempConfig.sinaType := #sinaType;
+	    #tempConfig.sinaHwID := #sinaHwID;
+	    #tempConfig.sinaDriveObjectNo := #tempDriveObjectNo;
+	    
+	    // Set drive object configuration consistently
+	    #configuration[#tempDriveIndex] := #tempConfig;
+	  END_IF;
+	END_REGION PROGRAM LOGIC
+	
+	REGION OUTPUTS
+	  // Status
+	  #error := #tempDiagnostic.status.%X15;
+	  #status := #tempDiagnostic.status;
+	  #diagnostics := #tempDiagnostic;
+	  // ENO mechanism
+	  ENO := NOT #tempDiagnostic.status.%X15;
+	END_REGION OUTPUTS
+	
+END_FUNCTION
+

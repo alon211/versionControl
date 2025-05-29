@@ -1,0 +1,77 @@
+﻿FUNCTION "LPMLV2022_ConfigureCompleteCmdCfg" : Void
+TITLE = LPMLV2022_ConfigureCompleteCmdCfg
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : APC_ERLF
+FAMILY : OMAC
+VERSION : 1.0
+//The function generates a DWord value which represents the state configuration for all unit modes.
+// Note: All inputs must be set to comply with ANSI/ISA-TR88.00.02-2022
+   VAR_INPUT 
+      Suspended : Bool;   // TRUE: The Complete control command is taken into account in state Suspended
+      Execute : Bool;   // TRUE: The Complete control command is taken into account in state Execute
+      Held : Bool;   // TRUE: The Complete control command is taken into account in state Held
+   END_VAR
+
+   VAR_OUTPUT 
+      completeCmdCfg : DWord;   // Complete control command configuration for all unit modes (one config. for all modes). Bit locations within the DWORD value represent State numbers
+   END_VAR
+
+
+BEGIN
+	REGION HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2023
+	    //-------------------------------------------------------------------------------
+	    // Title:            FC LPMLV2022_ConfigureCompleteCmdCfg (FC 30114)
+	    // Comment/Function: The function generates a DWord value which represents
+	    //                   the state configuration for all unit modes.
+	    //                
+	    //                Note
+	    //                : All inputs must be set TO comply with ANSI/ISA-TR88.00.02-2022
+	    // Library/Family:   LPMLV2022
+	    // Author:           APC_ERLF
+	    // Tested with:      S7-1211 with FW version V4.2, S7-1511-1 PN with FW version V2.6
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     S7-1200 FW 4.2 / S7-1500 FW 2.6
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 28.02.2023 | KT                      | First released version
+	    //===============================================================================
+	END_REGION
+	
+	
+	REGION DESCRIPTION
+	(/*
+	This function allows the user to set the Complete control command configuration 
+	for all unit modes of the _LPMLV2022_UnitModeStateManager_ and the FB 
+	_LPMLV2022_UnitModeStateManagerBool_ easily (one config. for all modes). The 
+	output of this function can directly be assigned to the 
+	_LPMLV2022_UnitModeStateManager_ configuration _completeCmdCfg_. The bit 
+	locations within the _completeCmdCfg_ DWord represent state numbers. A set bit 
+	means, that the Complete command is taken into account by the 
+	_LPMLV2022_UnitModeStateManager_ in the corresponding state.
+	
+	
+	NOTE
+	:   This function is only needed, if another configuration than the default 
+	configuration of the completeCmdCfg of the 
+	LPMLV2022_UnitModeStateManager shall be used (default: 16#0000_0860, i.e. 
+	the bits for the states Suspended, Execute and Held are set to comply with 
+	ANSI/ISA-TR88.00.02-2022).
+	*/)
+	    
+	    
+	END_REGION
+	
+	// Initialize states configuration
+	#completeCmdCfg := 16#0000_0000;
+	
+	// Set states configuration
+	#completeCmdCfg.%X5  := #Suspended;
+	#completeCmdCfg.%X6  := #Execute;
+	#completeCmdCfg.%X11 := #Held;
+END_FUNCTION
+

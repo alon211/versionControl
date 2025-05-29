@@ -1,0 +1,123 @@
+﻿FUNCTION_BLOCK "LPMLV2022_UnitModeChangeAllowed"
+TITLE = LPMLV2022_UnitModeChangeAllowed
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : APC_ERLF
+FAMILY : OMAC
+VERSION : 1.0
+//Support: tech.team.motioncontrol@siemens.com
+   VAR_INPUT 
+      UnitModeCurrent : DInt := "LPMLV2022_MODE_INVALID";   // Current unit mode
+      StateCurrent : DInt := "LPMLV2022_STATE_UNDEFINED";   // Current state
+   END_VAR
+
+   VAR_OUTPUT 
+      allowedUnitModes { ExternalWritable := 'False'} : DWord;   // Bit locations within the DWORD represent Mode numbers. A value of 1 in a bit location [0-31] indicates that a change to the corresponding Mode number is currently possible. Mode 0 is an Invalid Mode, therefore bit 0 is unused
+   END_VAR
+
+   VAR_IN_OUT 
+      configuration : "LPMLV2022_typeConfiguration";   // FB configuration of the LPMLV2022_UnitModeStateManager
+   END_VAR
+
+   VAR 
+      statUnitModeCurrentOld { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt := "LPMLV2022_MODE_INVALID";   // For edge detection
+      statStateCurrentOld { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt := "LPMLV2022_STATE_UNDEFINED";   // For edge detection
+      statAllowedUnitModes { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DWord;   // Static variable for output 'allowedUnitModes'
+   END_VAR
+
+   VAR_TEMP 
+      tempDWord1 : DWord;   // Internal variable for the evaluation of DWORD configuration variables
+      tempDWord2 : DWord;   // Internal variable for the evaluation of DWORD configuration variables
+      tempUnitMode : DInt;   // Internal variable for the requested unit mode
+      tempUnitModeCurrent : DInt;   // Temporary value for input 'UnitModeCurrent'
+      tempStateCurrent : DInt;   // Temporary value for input 'StateCurrent'
+   END_VAR
+
+
+BEGIN
+	REGION HEADER
+	    //================================================================================
+	    // SIEMENS AG
+	    // (c)Copyright 2024 All Rights Reserved
+	    //--------------------------------------------------------------------------------
+	    // Library: LPMLV2022_Addon
+	    // Tested with: S7-1211 with FW version V4.2, S7-1511-1 PN with FW version V2.6
+	    // Engineering: TIA Portal V15.1
+	    // Restrictions: -
+	    // Requirements: S7-1200 FW 4.2 / S7-1500 FW 2.6
+	    // Functionality: Determination into which unit modes a change is currently possible
+	    // 
+	    // Support: tech.team.motioncontrol@siemens.com
+	    // Note: Parameter comments are only available in language 'English (United States)'
+	    //--------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  Date        Expert in charge  Changes applied
+	    // 01.00.00 06.05.2024  KT                First released version
+	    // 01.00.01 03.06.2024  KT                LPMLV2022_MAX_MODES_UPPER_LIM (default: 31)
+	    //                                        is used now instead of LPMLV2022_MODE_USER_28 (31)
+	    //                                        Runtime optimization FOR loop (tempDWord2 calc.)
+	    //================================================================================
+	END_REGION
+	
+	// Work with temporary values / create process image
+	#tempUnitModeCurrent := #UnitModeCurrent;
+	#tempStateCurrent := #StateCurrent;
+	
+	// UnitModeCurrent, StateCurrent changed
+	IF (#tempUnitModeCurrent <> #statUnitModeCurrentOld) OR (#tempStateCurrent <> #statStateCurrentOld) THEN
+	    #statAllowedUnitModes := 16#0000_0000;
+	    
+	    IF (#tempUnitModeCurrent > "LPMLV2022_MODE_INVALID") AND (#tempUnitModeCurrent <= "LPMLV2022_MAX_MODES_UPPER_LIM") AND // UnitModeCurrent is valid
+	        (#tempStateCurrent > "LPMLV2022_STATE_UNDEFINED") AND (#tempStateCurrent <= "LPMLV2022_STATE_COMPLETED") // StateCurrent is valid
+	    THEN
+	        // Calculation for "1st check" in FOR loop
+	        #tempDWord2 := SHR_DWORD(IN := #configuration.ModeTransitionCfg[#tempUnitModeCurrent], N := DINT_TO_UINT(#tempStateCurrent)); // Shift the bit, whose bit position corresponds to the value of tempStateCurrent to bit position zero (tempDWord2.%X0)
+	        
+	        FOR #tempUnitMode := "LPMLV2022_MODE_PRODUCTION" TO "LPMLV2022_MAX_MODES_UPPER_LIM" DO // Try with all possible values for a requested unit mode (one after another)
+	            IF (#tempUnitMode <> #tempUnitModeCurrent) THEN // The requested unit mode must of course be different from the current unit mode
+	                // 1st check: is a mode transition in the current state allowed?
+	                // -> Check mode transition config. The corresponding state bit for tempStateCurrent must be present in ModeTransitionCfg[tempUnitMode] AND ModeTransitionCfg[tempUnitModeCurrent]
+	                #tempDWord1 := SHR_DWORD(IN := #configuration.ModeTransitionCfg[#tempUnitMode], N := DINT_TO_UINT(#tempStateCurrent)); // Shift the bit, whose bit position corresponds to the value of tempStateCurrent to bit position zero (tempDWord1.%X0)
+	                
+	                IF (#tempDWord1.%X0 = TRUE) AND (#tempDWord2.%X0 = TRUE) THEN // The state bit of the current state is set in both mode transition config DWords, i.e. mode transition is allowed
+	                    // 2nd check: requested unit mode enabled? -> Is the corresponding bit set in the EnabledModesCfg DWord?
+	                    #tempDWord1 := SHR_DWORD(IN := #configuration.EnabledModesCfg, N := DINT_TO_UINT(#tempUnitMode)); // Shift the bit, whose bit position corresponds to the value of tempUnitMode to bit position zero (tempDWord1.%X0)
+	                    
+	                    IF (#tempDWord1.%X0 = TRUE) THEN // Requested unit mode is enabled
+	                        // 3rd check: state in requested unit mode available or rather not disabled? (Stopped, Idle, Execute and Aborted are always present. They cannot be disabled. Every acting state can be disabled)
+	                        IF NOT (
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_CLEARING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X1 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_STARTING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X3 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_SUSPENDED") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X13 = TRUE) AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X14 = TRUE) AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X5 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_STOPPING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X7 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_ABORTING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X8 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_HOLDING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X10 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_HELD") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X10 = TRUE) AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X12 = TRUE) AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X11 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_UNHOLDING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X12 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_SUSPENDING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X13 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_UNSUSPENDING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X14 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_RESETTING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X15 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_COMPLETING") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X16 = TRUE)) OR
+	                            ((#tempStateCurrent = "LPMLV2022_STATE_COMPLETED") AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X16 = TRUE) AND (#configuration.DisabledStatesCfg[#tempUnitMode].%X17 = TRUE))
+	                            )
+	                        THEN // State in requested unit mode is available (or is going to be available, because the state configuration is adapted by the LPMLV2022_UnitModeStateManager)
+	                            // Change to tempUnitMode is possible -> set the corresponding mode bit in statAllowedUnitModes
+	                            #tempDWord1 := 16#0000_0001;
+	                            #statAllowedUnitModes := #statAllowedUnitModes OR (SHL_DWORD(IN := #tempDWord1, N := DINT_TO_UINT(#tempUnitMode))); // SHL_DWORD(... shift the bit at bit position zero to the bit position which corresponds to the value of tempUnitMode
+	                        END_IF;
+	                    END_IF;
+	                END_IF;
+	            END_IF;
+	        END_FOR;
+	    END_IF;
+	END_IF;
+	
+	// Save values for change detection
+	#statUnitModeCurrentOld := #tempUnitModeCurrent;
+	#statStateCurrentOld := #tempStateCurrent;
+	
+	REGION OUTPUTS
+	    // Write output
+	    #allowedUnitModes := #statAllowedUnitModes;
+	END_REGION OUTPUTS
+END_FUNCTION_BLOCK
+

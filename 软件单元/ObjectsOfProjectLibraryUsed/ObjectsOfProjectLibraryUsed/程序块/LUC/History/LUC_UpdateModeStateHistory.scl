@@ -1,0 +1,73 @@
+﻿FUNCTION "LUC_UpdateModeStateHistory" : Void
+TITLE = LUC_UpdateModeStateHistory
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+VERSION : 1.2
+//Update the mode and state history.
+   VAR_INPUT 
+      currentMode : DInt;   // Current unit mode
+      currentState : DInt;   // Current unit state
+   END_VAR
+
+   VAR_IN_OUT 
+      history : Array[*] of "LUC_typeModeState";
+   END_VAR
+
+   VAR_TEMP 
+      tempIndex : DInt;
+      tempUpperBound : DInt;   // Last value in history array
+   END_VAR
+
+   VAR CONSTANT 
+      ARRAY_DIMENSION : UDInt := 1;   // Dimension of array*
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //===============================================================================
+	  // Siemens AG / (c)Copyright 2024
+	  //-------------------------------------------------------------------------------
+	  // Title:            LUC_UpdateModeStateHistory
+	  // Comment/Function: Update the mode and state history.
+	  // Library/Family:   LUC - Library of Unit Controls
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      S7-PLCSIM Advanced 6.0
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     -
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge        | Changes applied
+	  //----------|------------|-------------------------|-----------------------------
+	  // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | First released version
+	  // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Optimized code.
+	  //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	(/*
+	Update the mode and state history. When mode or state change occur, save current mode and state in history[0], and the previous ones in ascending order.
+	 */)
+	END_REGION DESCRIPTION
+	
+	REGION EVALUATION
+	    // Only execute, when either mode or state or both have changed in the last cycle
+	    IF #currentMode <> #history[0].mode OR #currentState <> #history[0].state THEN
+	        // Determine how large the array is
+	        #tempUpperBound := UPPER_BOUND(ARR := #history, DIM := #ARRAY_DIMENSION);
+	        
+	        // Shift history data forward by index one
+	        FOR #tempIndex := #tempUpperBound TO 1 BY -1 DO
+	            #history[#tempIndex] := #history[#tempIndex - 1];
+	        END_FOR;
+	        #history[1].duration := RUNTIME(#history[0].duration);
+	        
+	        // Update history for current mode and state
+	        #history[0].mode := #currentMode;
+	        #history[0].state := #currentState;
+	    END_IF;
+	END_REGION EVALUATION
+END_FUNCTION
+

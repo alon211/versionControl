@@ -1,0 +1,110 @@
+﻿FUNCTION "LPMLV2022_ConfigureDisabledStatesCfg" : Void
+TITLE = LPMLV2022_ConfigureDisabledStatesCfg
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : APC_ERLF
+FAMILY : OMAC
+VERSION : 1.0
+//The function generates a DWord value which represents the state configuration for one unit mode.
+   VAR_INPUT 
+      Clearing : Bool;   // TRUE: Disable state Clearing
+      Starting : Bool;   // TRUE: Disable state Starting
+      Suspended : Bool;   // TRUE: Disable state Suspended
+      Stopping : Bool;   // TRUE: Disable state Stopping
+      Aborting : Bool;   // TRUE: Disable state Aborting
+      Holding : Bool;   // TRUE: Disable state Holding
+      Held : Bool;   // TRUE: Disable state Held
+      Unholding : Bool;   // TRUE: Disable state Unholding
+      Suspending : Bool;   // TRUE: Disable state Suspending
+      Unsuspending : Bool;   // TRUE: Disable state Unsuspending
+      Resetting : Bool;   // TRUE: Disable state Resetting
+      Completing : Bool;   // TRUE: Disable state Completing
+      Completed : Bool;   // TRUE: Disable state Completed
+   END_VAR
+
+   VAR_OUTPUT 
+      DisabledStatesCfg : DWord;   // Disabled states configuration for one unit mode. Bit locations within the DWORD value represent State numbers
+   END_VAR
+
+
+BEGIN
+	REGION HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2023
+	    //-------------------------------------------------------------------------------
+	    // Title:            FC LPMLV2022_ConfigureDisabledStatesCfg (FC 30111)
+	    // Comment/Function: The function generates a DWord value which represents
+	    //                   the state configuration for one unit mode.
+	    // Library/Family:   LPMLV2022
+	    // Author:           APC_ERLF
+	    // Tested with:      S7-1211 with FW version V4.2, S7-1511-1 PN with FW version V2.6
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     S7-1200 FW 4.2 / S7-1500 FW 2.6
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 28.02.2023 | KT                      | First released version
+	    //===============================================================================
+	    
+	    
+	END_REGION
+	
+	
+	REGION DESCRIPTION
+	    (/*
+	This function allows the user to set the state configuration for every unit mode in 
+	the FB _LPMLV2022_UnitModeStateManager_ and the FB 
+	_LPMLV2022_UnitModeStateManagerBool_ easily. Of course, it is also possible to 
+	set the state configurations directly in the FB _LPMLV2022_UnitModeStateManager_
+	configuration.
+	
+	With the function, the user has to set the associated inputs for the different states 
+	to “TRUE”, e.g. _“Held := TRUE”_ for disabling the state _Held_.
+	
+	The function generates a DWord value which represents the state configuration for 
+	one unit mode. This value is bit coded and means that every bit represents a 
+	switch where states can be disabled or enabled for a unit mode, e.g. disabling the 
+	state _Held_ the bit number 11 has to be set to “TRUE”. As can be seen in the 
+	example the state numbers according to the OMAC standard also define the bit 
+	numbers in the DWord value (see Table - Description of the possible states).
+	
+	To write the state configuration from the function output to the according _“Unit 
+	Mode and State Manager”_, the output _DisabledStatesCfg_ has to be connected to 
+	the configuration of the corresponding FB _LPMLV2022_UnitModeStateManager_.
+	
+	
+	
+	NOTE 
+	:   According to the OMAC standard some states are mandatory (Stopped, Idle, 
+	Execute and Aborted) and cannot be disabled. If they are nevertheless disabled,
+	the _“Unit Mode and State Manager”_ will enable these states automatically and 
+	provide the corrected configuration as a DWord value at output 
+	_CurDisabledStates_.
+	*/)
+	    
+	    
+	END_REGION
+	
+	
+	// Initialize states configuration
+	#DisabledStatesCfg := 16#0000_0000;
+	
+	// Note: Stopped (.%X2), Idle (.%X4), Execute (.%X6) and Aborted (.%X9) are always present. They cannot be disabled
+	
+	// Set states configuration
+	#DisabledStatesCfg.%X1  := #Clearing;
+	#DisabledStatesCfg.%X3  := #Starting;
+	#DisabledStatesCfg.%X5  := #Suspended;
+	#DisabledStatesCfg.%X7  := #Stopping;
+	#DisabledStatesCfg.%X8  := #Aborting;
+	#DisabledStatesCfg.%X10 := #Holding;
+	#DisabledStatesCfg.%X11 := #Held;
+	#DisabledStatesCfg.%X12 := #Unholding;
+	#DisabledStatesCfg.%X13 := #Suspending;
+	#DisabledStatesCfg.%X14 := #Unsuspending;
+	#DisabledStatesCfg.%X15 := #Resetting;
+	#DisabledStatesCfg.%X16 := #Completing;
+	#DisabledStatesCfg.%X17 := #Completed;
+END_FUNCTION
+

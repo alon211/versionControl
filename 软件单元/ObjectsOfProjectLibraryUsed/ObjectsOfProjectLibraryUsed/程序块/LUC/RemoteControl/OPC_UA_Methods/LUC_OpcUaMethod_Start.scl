@@ -1,0 +1,185 @@
+﻿FUNCTION_BLOCK "LUC_OpcUaMethod_Start"
+TITLE = LUC_OpcUaMethod_Start
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+NAME : LUC_OpcUaMethod_Start
+VERSION : 1.2
+//This Block represents one OPC UA Method interface to send a defined command to the _LUC_InterfaceManager_ instance. The Method is called in the method collector `LUC_RemoteCtrl_OpcUa`, where all other available OPC UA methods are called as well. Therefore, there is no need to call this single method.
+   VAR_INPUT 
+      methodEnable { ExternalWritable := 'False'} : Bool;   // Method is enabled
+      remoteControlEnabled { ExternalWritable := 'False'} : Bool;   // Remote control is active
+      currentState { ExternalWritable := 'False'} : DInt := "LPMLV2022_STATE_STOPPED";   // Current executed state
+      cntrlCmdDenied { ExternalWritable := 'False'; S7_HiddenAssignment := 'HideIfNoParamAssigned'} : Bool;   // Control command denied (output is reset with the next successful CntrlCmd or if input 'CntrlCmd' is set to 0 or if input 'CmdChangeRequest' is set to FALSE)
+   END_VAR
+
+   VAR_OUTPUT 
+      error { ExternalWritable := 'False'} : Bool;   // Error occurred
+      status { ExternalWritable := 'False'} : Word := #STATUS_NO_CALL;   // Status identifier
+      subfunctionStatus { ExternalWritable := 'False'} : DWord;   // Status of called subfunction when error occurs
+   END_VAR
+
+   VAR_IN_OUT 
+      stateRequest : "LUC_typeStateCommands";   // Commands to request a state change
+   END_VAR
+
+   VAR 
+      OPC_UA_ServerMethodPre_Instance {InstructionName := 'OPC_UA_ServerMethodPre'; LibVersion := '1.0'; ExternalVisible := 'False'; S7_SetPoint := 'False'} : OPC_UA_ServerMethodPre;
+      OPC_UA_ServerMethodPost_Instance {InstructionName := 'OPC_UA_ServerMethodPost'; LibVersion := '1.0'; ExternalVisible := 'False'; S7_SetPoint := 'False'} : OPC_UA_ServerMethodPost;
+   END_VAR
+
+   VAR_TEMP 
+      tempStatus : Word;   // Status of function block
+      tempSubfunctionStatus : DWord;   // Status of subfunction from last call
+      tempPostResult : DWord;   // Result for post operation
+      tempPostFinished : Bool;   // Call finished successfully
+      tempIndex : DInt;   // Index for loops
+   END_VAR
+
+   VAR CONSTANT 
+      PARAMETERS_UPPER_LIM : Int := 9;   // Upper limit for parameters array for method as input
+      OPC_UA_GOOD : DWord := 16#0000_0000;   // OPC UA Result Code: The operation was successful
+      OPC_UA_BAD_INVALID_STATE : DWord := 16#80AF_0000;   // OPC UA Result Code: The operation cannot be completed because the Object is closed, uninitialized or in some other invalid state
+      OPC_UA_BAD_USER_ACCESS_DENIED : DWord := 16#801F_0000;   // OPC UA Result Code: The user does not have permission to perform the requested operation
+      OPC_UA_BAD_CONFIGURATION_ERROR : DWord := 16#8089_0000 ;   // OPC UA Result Code: There is a problem with the configuration that affects the usefulness of the value
+      STATUS_EXECUTION_FINISHED : Word := 16#0000;   // Execution finished without errors
+      STATUS_NO_CALL : Word := 16#7000;   // No call of FB
+      ERR_METHOD_PRE : Word := 16#8600;   // Error in block OPC_UA_ServerMethodPre
+      ERR_METHOD_POST : Word := 16#8601;   // Error in block OPC_UA_ServerMethodPost
+      LUC_CMD_CMD_UNDEFINED : DInt := 0;   // OMAC PackMLV30 control command Undefined
+      LUC_CMD_CMD_RESET : DInt := 1;   // OMAC PackMLV30 control command Reset
+      LUC_CMD_CMD_START : DInt := 2;   // OMAC PackMLV30 control command Start
+      LUC_CMD_CMD_STOP : DInt := 3;   // OMAC PackMLV30 control command Stop
+      LUC_CMD_CMD_HOLD : DInt := 4;   // OMAC PackMLV30 control command Hold
+      LUC_CMD_CMD_UNHOLD : DInt := 5;   // OMAC PackMLV30 control command Unhold
+      LUC_CMD_CMD_SUSPEND : DInt := 6;   // OMAC PackMLV30 control command Suspend
+      LUC_CMD_CMD_UNSUSPEND : DInt := 7;   // OMAC PackMLV30 control command Unsuspend
+      LUC_CMD_CMD_ABORT : DInt := 8;   // OMAC PackMLV30 control command Abort
+      LUC_CMD_CMD_CLEAR : DInt := 9;   // OMAC PackMLV30 control command Clear
+      LUC_CMD_CMD_COMPLETE : DInt := 10;   // OMAC PackMLV30 control command Complete
+      LPMLV2022_STATE_UNDEFINED : DInt := 0;   // State machine : Undefined
+      LPMLV2022_STATE_CLEARING : DInt := 1;   // State Machine : Clearing
+      LPMLV2022_STATE_STOPPED : DInt := 2;   // State Machine : Stopped
+      LPMLV2022_STATE_STARTING : DInt := 3;   // State Machine : Starting
+      LPMLV2022_STATE_IDLE : DInt := 4;   // State Machine : Idle
+      LPMLV2022_STATE_SUSPENDED : DInt := 5;   // State Machine : Suspended
+      LPMLV2022_STATE_EXECUTE : DInt := 6;   // State Machine : Excecute
+      LPMLV2022_STATE_STOPPING : DInt := 7;   // State Machine : Stopping
+      LPMLV2022_STATE_ABORTING : DInt := 8;   // State Machine : Aborting
+      LPMLV2022_STATE_ABORTED : DInt := 9;   // State Machine : Aborted
+      LPMLV2022_STATE_HOLDING : DInt := 10;   // State Machine : Holding
+      LPMLV2022_STATE_HELD : DInt := 11;   // State Machine : Held
+      LPMLV2022_STATE_UNHOLDING : DInt := 12;   // State Machine : Unholding
+      LPMLV2022_STATE_SUSPENDING : DInt := 13;   // State Machine : Suspending
+      LPMLV2022_STATE_UNSUSPENDING : DInt := 14;   // State Machine : Unsuspending
+      LPMLV2022_STATE_RESETTING : DInt := 15;   // State Machine : Resetting
+      LPMLV2022_STATE_COMPLETING : DInt := 16;   // State Machine : Completing
+      LPMLV2022_STATE_COMPLETED : DInt := 17;   // State Machine : Completed
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //===============================================================================
+	  // Siemens AG / (c)Copyright 2024
+	  //-------------------------------------------------------------------------------
+	  // Title:            LUC_OpcUaMethod_Start
+	  // Comment/Function: This Block represents one OPC UA Method interface to send a defined command to the _LUC_InterfaceManager_ instance.
+	  //                   The Method is called in the method collector `LUC_RemoteCtrl_OpcUa`, where all other available OPC UA methods are called as well.
+	  //                   Therefore, there is no need to call this single method.  
+	  // Library/Family:   LUC - Library of Unit Control
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      -
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     Call the call environment method collector only - `LUC_RemoteCtrl_OpcUa` 
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge        | Changes applied
+	  //----------|------------|-------------------------|-----------------------------
+	  // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	  // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | Included LPMLV2022 constants as a local constants in the block
+	  // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Removed the forcing of the ENO to true.
+	  //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION METHOD PRE
+	  // Call of the pre method block
+	  #OPC_UA_ServerMethodPre_Instance();
+	  
+	  // Check if error at method occurred
+	  IF (#OPC_UA_ServerMethodPre_Instance.Error = TRUE) THEN
+	    #tempStatus := #ERR_METHOD_PRE;
+	    #tempSubfunctionStatus := #OPC_UA_ServerMethodPre_Instance.Status;
+	  END_IF;
+	END_REGION METHOD PRE
+	
+	REGION METHOD CALLED
+	  IF (#OPC_UA_ServerMethodPre_Instance.UAMethod_Called) THEN
+	    // No state change allowed at the moment
+	    IF NOT #remoteControlEnabled THEN
+	      #tempPostResult := #OPC_UA_BAD_USER_ACCESS_DENIED;
+	      #tempPostFinished := TRUE;
+	      
+	    ELSIF NOT #methodEnable THEN
+	      #tempPostResult := #OPC_UA_BAD_CONFIGURATION_ERROR;
+	      #tempPostFinished := TRUE;
+	      
+	      // check is call ist already set
+	    ELSIF NOT #stateRequest.start THEN
+	      #stateRequest.start := TRUE;
+	      
+	      // check if change was successful
+	  ELSIF #currentState = #"LPMLV2022_STATE_STARTING"
+	      OR #currentState = #"LPMLV2022_STATE_EXECUTE" THEN
+	      #tempPostResult := #OPC_UA_GOOD;
+	      #tempPostFinished := TRUE;
+	      #stateRequest.start := FALSE;
+	      
+	      // check if change was denied - in case of wrong state from where we come.....
+	    ELSIF #cntrlCmdDenied THEN
+	      #tempPostResult := #OPC_UA_BAD_INVALID_STATE;
+	      #tempPostFinished := TRUE;
+	      #stateRequest.start := FALSE;
+	    END_IF;
+	  END_IF;
+	END_REGION METHOD CALLED
+	
+	REGION METHOD POST
+	  // Call of the post method block
+	  #OPC_UA_ServerMethodPost_Instance(UAMethod_Result   := #tempPostResult,
+	                                    UAMethod_Finished := #tempPostFinished);
+	  
+	  // Check if error at method occurred
+	  IF (#OPC_UA_ServerMethodPost_Instance.Error = TRUE)
+	    AND (#tempStatus = 16#0000)
+	  THEN
+	    #tempStatus := #ERR_METHOD_POST;
+	    #tempSubfunctionStatus := #OPC_UA_ServerMethodPost_Instance.Status;
+	  END_IF;
+	END_REGION METHOD POST
+	
+	REGION SET OUTPUTS
+	    // Outputs are set according to status and if a call was executed
+	    IF (#tempStatus <> 16#0000) THEN
+	        // Error occurred in call
+	        #status := #tempStatus;
+	        #error := TRUE;
+	        #subfunctionStatus := #tempSubfunctionStatus;
+	        
+	    ELSIF (#tempPostFinished = TRUE) THEN
+	        // Method was executed
+	        #status := #STATUS_EXECUTION_FINISHED;
+	        #error := FALSE;
+	        #subfunctionStatus := 16#0000_0000;
+	        
+	    ELSE
+	        // No call of block was necessary
+	        #status := #STATUS_NO_CALL;
+	        #error := FALSE;
+	        #subfunctionStatus := 16#0000_0000;
+	    END_IF;
+	END_REGION SET OUTPUTS
+	
+END_FUNCTION_BLOCK
+

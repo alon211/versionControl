@@ -1,0 +1,390 @@
+﻿FUNCTION_BLOCK "LSNTP_Server"
+TITLE = LSNTP_Server
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+FAMILY : LSNTP
+VERSION : 4.0
+//SNTP server implementation according to RFC 4330 using UDP. This FB answers NTP client requests. The internal clock is used as source.
+   VAR_INPUT 
+      enable : Bool;   // TRUE: Enable functionality of FB
+      hwID : HW_ANY := 64;   // Hardware identifier of Ethernet interface
+      connID : CONN_OUC;   // Internal connection ID used for TURCV and TUSEND
+      referenceID : USInt;   // Source of date and time (0 = uncalibrated local clock, 1 = DCF77, 2 = GPS)
+      lastTimeSet {InstructionName := 'DTL'; LibVersion := '1.0'} : DTL := #LAST_TIME_SET_1990;   // Date and time when the time was set last. Set only if external reference is used.
+   END_VAR
+
+   VAR_OUTPUT 
+      valid { ExternalWritable := 'False'} : Bool;   // TRUE: Valid set of output values available at the FB
+      busy { ExternalWritable := 'False'} : Bool;   // TRUE: FB is not finished and new output values can be expected
+      error { ExternalWritable := 'False'} : Bool;   // TRUE: An error occurred during the execution of the FB
+      status { ExternalWritable := 'False'} : Word := #STATUS_NO_CALL;   // 16#0000-16#7FFF: Status of the FB, 16#8000 - 16#FFFF: Error identification
+      diagnostics { ExternalWritable := 'False'} : "LSNTP_typeDiagnostics";   // Diagnostics information of FB
+   END_VAR
+
+   VAR 
+      statEnableOld { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Old value of 'enable' input for edge detection
+      statValid { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Static value for output 'valid'
+      statBusy { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Static value for output 'busy'
+      statError { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Static value for output 'error'
+      statErrorUserCleared { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Error occurred that can only be solved by user; rising edge at enable input necessary
+      statErrorAutoCleared { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Error occurred that can be acknowledged by FB
+      statStatus { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Word := #STATUS_NO_CALL;   // Static value for output 'status'
+      statSubfunctionStatus { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Word;   // Status or return value of called FBs, FCs and system blocks
+      statFBErrorState { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // State in the state machine of the block where the error occurred
+      statFBState { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt := #FB_STATE_NO_PROCESSING;   // State in the state machine of the FB
+      statDisablingCompleted { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // TRUE: Disabling has been completed
+      statEmptyDiagnostics { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LSNTP_typeDiagnostics";   // Empty diagnostics information (for initialization purposes only)
+      instTCon {InstructionName := 'TCON'; LibVersion := '4.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TCON;   // Instance of TCON
+      instTURcv {InstructionName := 'TURCV'; LibVersion := '4.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TURCV;   // Instance of TURCV
+      instTUSend {InstructionName := 'TUSEND'; LibVersion := '4.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TUSEND;   // Instance of TUSEND
+      instTDiscon {InstructionName := 'TDISCON'; LibVersion := '2.1'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TDISCON;   // Instance of TDISCON
+      statConParam {InstructionName := 'TCON_IP_v4'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TCON_IP_v4 := ((), (), 19, (), ([()]), (), 123);   // Parameters
+      statAddr {InstructionName := 'TADDR_Param'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TADDR_Param;   // Address of the client
+      statTelegramRcvd { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LSNTP_typeTelegram";   // Telegram received from client
+      statTelegramSend { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LSNTP_typeTelegram";   // Telegram to send to client
+   END_VAR
+
+   VAR_TEMP 
+      tempEnable : Bool;   // Temporary value for input 'enable'
+      tempSysTime {InstructionName := 'DTL'; LibVersion := '1.0'} : DTL;   // System time
+      tempRet : Int;   // Return of function to read system time
+      tempNumChar : UInt;   // Number of chars that were converted
+   END_VAR
+
+   VAR CONSTANT 
+      LEN_SNTP : Int := 48;   // Length of SNTP telegram without authentication
+      INVALID_YEAR : UInt := 2010;   // Ignore time that's older than this year
+      SEC_PER_DAY : UDInt := 86400;   // 86400 seconds in 1 day
+      DELTA_1970_1990 : UDInt := 631152000;   // Delta between 1970-1-1 and 1990-1-1 in seconds (IEC Time Base)
+      DELTA_1900_1970 : UDInt := 2208988800;   // Delta between 1900-1-1 and 1970-1-1 in seconds
+      CLOCK_PRECISION : Byte := 16#FA;   // Clock Precision -6 = -0,015625s (for S7-1200)
+      LAST_TIME_SET_1990 {InstructionName := 'DTL'; LibVersion := '1.0'} : DTL := DTL#1990-01-01-00:00:00;   // Standard last time set
+      MASK_MODE : Byte := 2#00000111;   // Mask mode
+      MODE_CLIENT : Byte := 2#00000011;   // Mode: client
+      MODE_SERVER : Byte := 2#00011100;   // LI: No warning, VN: 3, Mode: server
+      FB_STATE_NO_PROCESSING : DInt := 0;   // FB state: No processing
+      FB_STATE_ENABLING : DInt := 10;   // FB state: Enabling
+      FB_STATE_WAIT_REQ : DInt := 50;   // FB state: Waiting for request
+      FB_STATE_SEND : Int := 51;   // FB state: Sending SNTP telegram to client
+      FB_STATE_DISABLING : DInt := 90;   // FB state: Disabling
+      STATUS_TEL_SENT : Word := 16#0000;   // NTP telegram sent to client
+      STATUS_REQ_RECEIVED : Word := 16#0001;   // NTP request received from client
+      STATUS_NO_CALL : Word := 16#7000;   // No job being currently processed
+      STATUS_FIRST_CALL : Word := 16#7001;   // First call after incoming new job (rising edge 'enable')
+      STATUS_SUBSEQUENT_CALL : Word := 16#7002;   // Subsequent call during active processing without further details
+      STATUS_DISCONNECTING : Word := 16#7003;   // Disconnecting
+      WARN_UNEXPECTED_PACKET : Word := 16#7F01;   // Warning: Received packet doesn't match criteria and is ignored
+      SUB_STATUS_NO_ERROR : Word := 16#0000;   // No error occured in subfunction call
+      ERR_UNDEFINED_STATE : Word := 16#8600;   // Error: due to an undefined state in state machine
+      ERR_TCON : Word := 16#8601;   // Error: TCON ecountered error
+      ERR_TUSEND : Word := 16#8602;   // Error: TUSEND encountered error
+      ERR_TURCV : Word := 16#8603;   // Error: TURCV encountered error
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //=============================================================================
+	  // SIEMENS AG / (c)Copyright 2020
+	  //-----------------------------------------------------------------------------
+	  // Title:        LSNTP_Server
+	  // Function:     SNTP server implementation according to RFC 4330 using UDP.
+	  //               This FB answers NTP Client requests. The internal clock is
+	  //               used as source.
+	  // Library:      LSNTP
+	  // Author:       Siemens Industry Online Support
+	  // Tested with:  CPU 1516-3 PN/DP FW 2.8
+	  // Engineering:  TIA Portal V16
+	  // Restrictions: --
+	  // Requirements: S7-1200 CPU with FW V4.0 or higher
+	  //               S7-1500 CPU with FW V2.0 or higher
+	  //-----------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge       | Changes applied
+	  //----------|------------|------------------------|------------------------------
+	  // 01.00.00 | 01.10.2013 | GER I S WEST IA APPS   | First released version
+	  // 02.00.00 | 01.02.2016 | Online Support         | Migration to TIA Portal V13 SP1
+	  //                                                | Application of programming style guide S7-1200/1500
+	  // 02.01.00 | 19.04.2017 | Online Support         | Upgraded to TIA Portal V14
+	  //                                                | Added "hwID" to interface
+	  // 03.00.00 | 01.10.2017 | Online Support         | Replaced "TCON_Param" with "TCON_IP_V4"
+	  //                                                | Fixed error in calculation of fractional part
+	  // 03.00.01 | 17.05.2018 | Online Support         | Fixed error in calculation of reference timestamp if "lastTimeSet" is before 1990
+	  // 03.00.02 | 31.07.2019 | Online Support         | Upgraded to TIA Portal V15.1
+	  //                                                | Activated simulation support
+	  // 04.00.00 | 28.04.2021 | Online Support         | Implemented PLCopen template, added status codes for more information
+	  //=============================================================================
+	END_REGION
+	
+	#tempEnable := #enable; // Work with temporary value / create process image
+	
+	REGION ENABLING/DISABLING
+	  IF (#tempEnable = TRUE) AND (#statStatus = #STATUS_NO_CALL) THEN // Enable FB
+	    // First call; initialize FB
+	    #statValid := TRUE;
+	    #statBusy := TRUE;
+	    #statError := FALSE;
+	    #statErrorUserCleared := FALSE;
+	    #statErrorAutoCleared := FALSE;
+	    #statStatus := #STATUS_FIRST_CALL;
+	    #statSubfunctionStatus := #SUB_STATUS_NO_ERROR;
+	    #statFBErrorState := 0;
+	    #diagnostics := #statEmptyDiagnostics;
+	    #statDisablingCompleted := FALSE;
+	    
+	    // Set connection parameters
+	    #statConParam.ID := #connID;
+	    #statConParam.InterfaceId := #hwID;
+	    
+	    // Reset instructions
+	    #instTCon(REQ     := false,
+	              CONNECT := #statConParam);
+	    
+	    #instTURcv(EN_R := FALSE,
+	               ADDR := #statAddr);
+	    
+	    #instTUSend(REQ  := FALSE,
+	                ADDR := #statAddr);
+	    
+	    #instTDiscon(REQ := FALSE);
+	    
+	    // State machine - start functionality
+	    #statFBState := #FB_STATE_ENABLING;
+	    
+	  ELSIF (#tempEnable = FALSE) AND (#statEnableOld = TRUE) THEN // Disable FB 
+	    #statFBState := #FB_STATE_DISABLING;
+	    
+	  ELSIF (#statStatus = #STATUS_FIRST_CALL) THEN // Set status identifier of subsequent call
+	    #statStatus := #STATUS_SUBSEQUENT_CALL;
+	  END_IF;
+	  
+	  // Edge detection 'enable' input
+	  #statEnableOld := #tempEnable;
+	END_REGION ENABLING/DISABLING
+	
+	IF (#statStatus = #STATUS_NO_CALL) THEN // Nothing to do -> End here to reduce "system load"
+	  RETURN;
+	END_IF;
+	
+	REGION STATE_MACHINE
+	  CASE #statFBState OF // State machine of FB
+	    #FB_STATE_NO_PROCESSING:
+	      REGION no processing
+	        // No processing active (Note: this state must always be present and left empty)
+	        ;
+	      END_REGION no processing
+	      
+	    #FB_STATE_ENABLING: // Enabling active
+	      REGION enabling
+	        #instTCon(REQ     := true,
+	                  ID      := #statConParam.ID,
+	                  CONNECT := #statConParam);
+	        
+	        IF #instTCon.DONE THEN
+	          #statFBState := #FB_STATE_WAIT_REQ;
+	        ELSIF #instTCon.ERROR THEN
+	          #statStatus := #ERR_TCON;
+	          #statSubfunctionStatus := #instTCon.STATUS;
+	          #statFBErrorState := #statFBState;
+	          #statErrorUserCleared := true;
+	        END_IF;
+	      END_REGION enabling
+	      
+	    #FB_STATE_WAIT_REQ: // Processing active
+	      REGION waiting for request
+	        #instTURcv(ID   := #statConParam.ID,
+	                   EN_R := TRUE,
+	                   DATA := #statTelegramRcvd,
+	                   ADDR := #statAddr);
+	        
+	        #statStatus := #STATUS_SUBSEQUENT_CALL;
+	        
+	        IF #instTURcv.NDR THEN
+	          // Check received length and MODE (3 = Client)
+	          IF (#instTURcv.RCVD_LEN = #LEN_SNTP) AND ((#statTelegramRcvd.flags[0] AND #MASK_MODE) = #MODE_CLIENT) THEN
+	            #statStatus := #STATUS_REQ_RECEIVED;
+	            #statFBState := #FB_STATE_SEND;
+	          ELSE
+	            #statStatus := #WARN_UNEXPECTED_PACKET;
+	          END_IF;
+	        ELSIF #instTURcv.ERROR THEN
+	          #statStatus := #ERR_TURCV;
+	          #statSubfunctionStatus := #instTURcv.STATUS;
+	          #statFBErrorState := #statFBState;
+	          #statErrorUserCleared := TRUE;
+	        END_IF;
+	      END_REGION waiting for request
+	      
+	    #FB_STATE_SEND:
+	      REGION sending response
+	        IF #instTUSend.BUSY = FALSE THEN // Nothing sent yet
+	          // Set NTP Data
+	          #statTelegramSend.rootDelay := 0;
+	          #statTelegramSend.rootDispersion := 0;
+	          
+	          // Read System Time
+	          #tempRet := RD_SYS_T(OUT => #tempSysTime);
+	          
+	          // Asume invalid time if year < INVALID_YEAR
+	          IF #tempRet <> 0 OR #tempSysTime.YEAR < #INVALID_YEAR THEN
+	            #statTelegramSend.flags[1] := 0; // Stratum
+	          ELSE
+	            #statTelegramSend.flags[1] := 1; // Stratum
+	          END_IF;
+	          
+	          // Convert System Time (UTC) to NTP Time
+	          #statTelegramSend.timestamps.receive.sec := UDINT_TO_DWORD((DATE_TO_UDINT(DTL_TO_DATE(#tempSysTime)) * #SEC_PER_DAY) + (TOD_TO_UDINT(DTL_TO_TOD(#tempSysTime)) / 1000) + #DELTA_1970_1990 + #DELTA_1900_1970);
+	          
+	          // Calculate fractional part
+	          #statTelegramSend.timestamps.receive.secFrac := UDINT_TO_DWORD(LREAL_TO_UDINT(UDINT_TO_LREAL(#tempSysTime.NANOSECOND) * 2 ** 32 / 10 ** 9));
+	          
+	          // Set Reference Timestamp to actual time if no other information available 
+	          IF #lastTimeSet <= #LAST_TIME_SET_1990 THEN
+	            #statTelegramSend.timestamps.reference.sec := #statTelegramSend.timestamps.receive.sec;
+	            #statTelegramSend.timestamps.reference.secFrac := #statTelegramSend.timestamps.receive.secFrac;
+	          ELSE
+	            // Convert Reference Time (UTC) to NTP Time Format
+	            #statTelegramSend.timestamps.reference.sec := UDINT_TO_DWORD((DATE_TO_UDINT(DTL_TO_DATE(#lastTimeSet)) * #SEC_PER_DAY) + (TOD_TO_UDINT(DTL_TO_TOD(#lastTimeSet)) / 1000) + #DELTA_1970_1990 + #DELTA_1900_1970);
+	            
+	            // Calculate fractional part
+	            #statTelegramSend.timestamps.reference.secFrac := UDINT_TO_DWORD(LREAL_TO_UDINT(UDINT_TO_LREAL(#lastTimeSet.NANOSECOND) * 2 ** 32 / 10 ** 9));
+	          END_IF;
+	          
+	          // Fill telegram according to RFC 4330
+	          #statTelegramSend.flags[0] := #MODE_SERVER; // Mode - No Warning, NTP Version 3, Server
+	          #statTelegramSend.flags[2] := #statTelegramRcvd.flags[2]; // Poll; Peer polling interval copied from request
+	          #statTelegramSend.flags[3] := #CLOCK_PRECISION;
+	          #statTelegramSend.rootDelay := 0; // Root Delay
+	          #statTelegramSend.rootDispersion := 0; // Root Dispersion
+	          
+	          // Set reference identifier according to RFC 4330, only LOCL, DCF and GPS supported
+	          CASE #referenceID OF
+	            1:
+	              Strg_TO_Chars(Strg   := 'DCF$00',
+	                            Cnt    => #tempNumChar,
+	                            Chars  := #statTelegramSend.referenceId,
+	                            pChars := 0);
+	            2:
+	              Strg_TO_Chars(Strg   := 'GPS$00',
+	                            Cnt    => #tempNumChar,
+	                            Chars  := #statTelegramSend.referenceId,
+	                            pChars := 0);
+	            ELSE // Use LOCL if unsupported reference identifier is specified
+	              Strg_TO_Chars(Strg   := 'LOCL',
+	                            Cnt    => #tempNumChar,
+	                            Chars  := #statTelegramSend.referenceId,
+	                            pChars := 0);
+	          END_CASE;
+	          
+	          #statTelegramSend.timestamps.transmit.sec := #statTelegramSend.timestamps.receive.sec;
+	          #statTelegramSend.timestamps.transmit.secFrac := #statTelegramSend.timestamps.receive.secFrac;
+	          
+	          // Copy received originate Timestamp to Transmit Timestamp
+	          #statTelegramSend.timestamps.originate.sec := #statTelegramRcvd.timestamps.transmit.sec;
+	          #statTelegramSend.timestamps.originate.secFrac := #statTelegramRcvd.timestamps.transmit.secFrac;
+	        END_IF;
+	        
+	        #instTUSend(REQ  := TRUE,
+	                    ID   := #statConParam.ID,
+	                    LEN  := INT_TO_UDINT(#LEN_SNTP), // send telegram without key identifier or authentication
+	                    DATA := #statTelegramSend,
+	                    ADDR := #statAddr);
+	        
+	        IF #instTUSend.DONE OR #instTUSend.ERROR THEN
+	          IF #instTUSend.DONE THEN
+	            #statStatus := #STATUS_TEL_SENT;
+	          ELSE
+	            #statStatus := #ERR_TUSEND;
+	            #statSubfunctionStatus := #instTUSend.STATUS;
+	            #statFBErrorState := #statFBState;
+	            #statErrorAutoCleared := TRUE;
+	          END_IF;
+	          
+	          #statFBState := #FB_STATE_WAIT_REQ; // Wait for next request
+	          
+	          // Reset instruction for next job
+	          #instTUSend(REQ  := FALSE,
+	                      ADDR := #statAddr);
+	        END_IF;
+	      END_REGION sending response
+	      
+	    #FB_STATE_DISABLING: // Disabling active
+	      REGION disabling
+	        #statStatus := #STATUS_DISCONNECTING;
+	        
+	        #instTDiscon(REQ := true,
+	                     ID  := #statConParam.ID);
+	        
+	        IF #instTDiscon.DONE OR #instTDiscon.ERROR THEN // Ignore TDISCON errors
+	          #statDisablingCompleted := TRUE;
+	        END_IF;
+	      END_REGION disabling
+	      
+	    ELSE // Undefined state in state machine reached
+	      REGION undefined state
+	        #statStatus := #ERR_UNDEFINED_STATE;
+	        #statErrorUserCleared := TRUE;
+	      END_REGION undefined state
+	  END_CASE;
+	END_REGION STATE_MACHINE
+	
+	REGION OUTPUTS
+	  // Write outputs
+	  IF (#statDisablingCompleted = TRUE) THEN
+	    REGION disabling
+	      // Reset outputs if disabling completed
+	      #statValid := FALSE;
+	      #statBusy := FALSE;
+	      #statError := FALSE;
+	      #statErrorUserCleared := FALSE;
+	      #statErrorAutoCleared := FALSE;
+	      #statStatus := #STATUS_NO_CALL;
+	    END_REGION disabling
+	    
+	  ELSIF (#statErrorUserCleared = TRUE) AND (#statError = FALSE) THEN
+	    REGION error user cleared
+	      // Error can only be cleared by user; rising edge at enable input is needed to continue 
+	      #statValid := FALSE;
+	      #statBusy := FALSE;
+	      #statError := TRUE;
+	      // Write diagnostics
+	      #diagnostics.status := #statStatus;
+	      #diagnostics.subfunctionStatus := #statSubfunctionStatus;
+	      #diagnostics.stateNumber := #statFBErrorState;
+	      // execution aborted --> set state no processing
+	      #statFBState := #FB_STATE_NO_PROCESSING;
+	    END_REGION error user cleared
+	    
+	  ELSIF (#statErrorAutoCleared = TRUE) AND (#statError = FALSE) THEN
+	    REGION error auto cleared
+	      // Error can be reset by FB automatically
+	      #statValid := FALSE;
+	      #statBusy := TRUE;
+	      #statError := TRUE;
+	      // Write diagnostics
+	      #diagnostics.status := #statStatus;
+	      #diagnostics.subfunctionStatus := #statSubfunctionStatus;
+	      #diagnostics.stateNumber := #statFBErrorState;
+	      // Nothing else to do, next state is set where error occured
+	      #statErrorAutoCleared := FALSE; 
+	    END_REGION error auto cleared
+	    
+	  ELSIF (#statErrorAutoCleared = FALSE) AND (#statErrorUserCleared = FALSE) AND (#statError = TRUE) THEN
+	    REGION after user/auto cleared
+	      // If autocleared error is acknowledged
+	      #statValid := TRUE;
+	      #statBusy := TRUE;
+	      #statError := FALSE;
+	      #statStatus := #STATUS_SUBSEQUENT_CALL;
+	    END_REGION after user/auto cleared
+	  END_IF;
+	  
+	  REGION Write static values to outputs
+	    #valid := #statValid;
+	    #busy := #statBusy;
+	    #error := #statError;
+	    #status := #statStatus;
+	    ENO := NOT #statError;
+	  END_REGION Write static values to outputs
+	END_REGION OUTPUTS
+END_FUNCTION_BLOCK
+

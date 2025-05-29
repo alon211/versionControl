@@ -1,0 +1,397 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="bit00_Enable" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Enable status. The technology object has been enabled</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Enable</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit01_Error" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An error is present</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Error</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit02_RestartActive" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A restart is active. The technology object will be reinitialized</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">RestartActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit03_OnlineStartValuesChanged" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The restart tags have been changed. For the changes to be applied, the thechnogy object must be reinitialized</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">OnlineStartValuesChanged</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit04_ControlPanelActive" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The axis control panel is active</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">ControlPanelActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit05_HomingDone" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Homing status. The technology object is homed</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HomingDone</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit06_Done" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Done. No motion job is in progress and the axis control panel is deactivated</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Done</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit07_Standstill" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Standstill signal. The axis is at a standstill</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">StandStill</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit08_PositioningCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A positioning command is active ("MC_MoveRelative","MC_MoveAbsolute")</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">PositioningCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit09_JogCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_MoveJog" job is running</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">JogCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit10_VelocityCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_MoveVelocity" job is running</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">VelocityCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit11_HomingCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_Home" job is being processed</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HomingCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit12_ConstantVelocity" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The velocity setpoint is reached. A constant velocity setpoint is output</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">ConstantVelocity</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit13_Accelerating" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An acceleration operation is active</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Accelerating</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit14_Decelerating" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A deacceleration operation is active</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Decelerating</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit15_SWLimitMinActive" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A negative software limit switch has been approached or exceeded</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">SWLimitMinActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit16_SWLimitMaxActive" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A positive software limit switch has been approached or exceeded</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">SWLimitMaxActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit17_HWLimitMinActive" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A negative hardware limit switch has been approached or exceeded</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HWLimitMinActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit18_HWLimitMaxActive" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A positive hardware limit switch has been approached or exceeded</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">HWLimitMaxActive</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit19_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit20_Reserved" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">Reserved</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit21_Synchronizing" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The axis synchronizes to a leading value</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Synchronizing</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit22_Synchronous" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The axis moves synchronously to a leading value</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Synhronous</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit23_SuperimposedMotionCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_MoveSuperimposed" job is running</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">SuperimposedMotionCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit24_PhasingCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_PhasingAbsolute" or "MC_PhasingRelative" job for the leading value offset is active</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">PhasingCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit25_AxisSimulation" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The technology object is in simulation</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">AxisSimulation</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit26_TorqueLimitingCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">An "MC_TorqueLimiting" job is running</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">TorqueLimitingCommand</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit27_InLimitation" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The drive operates at least at the threshold value (default 90%) of the torque limit/force limitation</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">InLimitation</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit28_NonPositionControlled" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The axis is not in position-controlled mode</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">NonPositionControlled</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit29_KinematicsMotionCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The axis is used for a kinematics job</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit30_InClamping" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">The axis is clamped at a fixed stop</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">InClamping</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="bit31_MotionInCommand" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="en-US">A "MC_MotionIn" job is running</MultiLanguageText>
+        <MultiLanguageText Lang="de-DE">Reserved</MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>LAF_typeAxisDiagStatusWord</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>Status information of a Technology object</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <MultilingualText ID="9" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="A" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>LAF_typeAxisDiagStatusWord</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="B" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="C" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="D" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="E" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="F" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="10" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

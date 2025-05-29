@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V19" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Access>Published</Access>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="geoAddressSystem" Datatype="UInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">mittels "LOG2GEO" aus log.Adresse (Systemkonstante) die geo.Adresse des PNIO-System ermitteln</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Evaluate geo address from log address</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="maxDevices" Datatype="DInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Input-Abbild</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Input image</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="maxModuls" Datatype="DInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Input-Abbild</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Input image</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="lowestDevNoConfig" Datatype="DInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">niedrgste PN-GeräteNr.</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">lowest PN device number</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="highestDevNoConfig" Datatype="DInt">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">höchste PN-GeräteNr.</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">highest PN device number</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="numberOfDevices" Datatype="&quot;LAF_typeDevDiagNoOfDevices&quot;">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Mittels"DeviceStates" ermittelte Info</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Via "DevicesStates" evaluated info</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="devDiagSummary" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Summensignal PN-Diagnosefehler</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Collective signal PN-Diagnostic error</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="blockBusyAfterNewStart" Datatype="Bool">
+      <AttributeList>
+        <BooleanAttribute Name="ExternalWritable" SystemDefined="true">false</BooleanAttribute>
+      </AttributeList>
+      <Comment>
+        <MultiLanguageText Lang="de-DE">FB läuft mit "Lesen von Daten", die nur einmalig nach CPU-Neustart gelesen werden.</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">FB busy with reading unique information after PLC startup</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="manualReadAll" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="de-DE">Manueller Anstoss ; erneutes Einlesen aller Daten/Infos</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">Manual trigger; renew informations</MultiLanguageText>
+      </Comment>
+    </Member>
+    <Member Name="resetHistoryAll" Datatype="Bool">
+      <Comment>
+        <MultiLanguageText Lang="de-DE">ResetHistoryAll von HMI</MultiLanguageText>
+        <MultiLanguageText Lang="en-US">ResetHistoryAll from HMI</MultiLanguageText>
+      </Comment>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>LAF_typeDevDiagGlobal</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>This data type contains global information for the HMI Pop-up.  
+
+**PLC Data types**  
+* [LAF_typeDevDiagNoOfDevices](../Library%20Types/LAF_typeDevDiagNoOfDevices.htm) 
+</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="3" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text>Autor: SICAR</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="4" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="5" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="6" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="7" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="8" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+      <MultilingualText ID="9" CompositionName="Title">
+        <ObjectList>
+          <MultilingualTextItem ID="A" CompositionName="Items">
+            <AttributeList>
+              <Culture>en-US</Culture>
+              <Text>PN_DEV_DIAG</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="B" CompositionName="Items">
+            <AttributeList>
+              <Culture>de-DE</Culture>
+              <Text>PN_DEV_DIAG</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="C" CompositionName="Items">
+            <AttributeList>
+              <Culture>fr-FR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="D" CompositionName="Items">
+            <AttributeList>
+              <Culture>it-IT</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="E" CompositionName="Items">
+            <AttributeList>
+              <Culture>es-ES</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="F" CompositionName="Items">
+            <AttributeList>
+              <Culture>ko-KR</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+          <MultilingualTextItem ID="10" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text />
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

@@ -1,0 +1,99 @@
+﻿FUNCTION "LPMLV2022_ConfigureModeTransitionCfg" : Void
+TITLE = LPMLV2022_ConfigureModeTransitionCfg
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : APC_ERLF
+FAMILY : OMAC
+VERSION : 1.0
+//The function generates a DWord value which represents the state configuration for one unit mode.
+   VAR_INPUT 
+      Clearing : Bool;   // TRUE: Allow a mode transition to/from state Clearing
+      Stopped : Bool;   // TRUE: Allow a mode transition to/from state Stopped
+      Starting : Bool;   // TRUE: Allow a mode transition to/from state Starting
+      Idle : Bool;   // TRUE: Allow a mode transition to/from state Idle
+      Suspended : Bool;   // TRUE: Allow a mode transition to/from state Suspended
+      Execute : Bool;   // TRUE: Allow a mode transition to/from state Execute
+      Stopping : Bool;   // TRUE: Allow a mode transition to/from state Stopping
+      Aborting : Bool;   // TRUE: Allow a mode transition to/from state Aborting
+      Aborted : Bool;   // TRUE: Allow a mode transition to/from state Aborted
+      Holding : Bool;   // TRUE: Allow a mode transition to/from state Holding
+      Held : Bool;   // TRUE: Allow a mode transition to/from state Held
+      Unholding : Bool;   // TRUE: Allow a mode transition to/from state Unholding
+      Suspending : Bool;   // TRUE: Allow a mode transition to/from state Suspending
+      Unsuspending : Bool;   // TRUE: Allow a mode transition to/from state Unsuspending
+      Resetting : Bool;   // TRUE: Allow a mode transition to/from state Resetting
+      Completing : Bool;   // TRUE: Allow a mode transition to/from state Completing
+      Completed : Bool;   // TRUE: Allow a mode transition to/from state Completed
+   END_VAR
+
+   VAR_OUTPUT 
+      ModeTransitionCfg : DWord;   // Mode Transition Configuration for one unit mode. Bit locations within the DWORD value represent State numbers
+   END_VAR
+
+
+BEGIN
+	REGION HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2023
+	    //-------------------------------------------------------------------------------
+	    // Title:            FC LPMLV2022_ConfigureModeTransitionCfg (FC 30112)
+	    // Comment/Function: The function generates a DWord value which represents
+	    //                   the state configuration for one unit mode.
+	    // Library/Family:   LPMLV2022
+	    // Author:           APC_ERLF
+	    // Tested with:      S7-1211 with FW version V4.2, S7-1511-1 PN with FW version V2.6
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     S7-1200 FW 4.2 / S7-1500 FW 2.6
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 28.02.2023 | KT                      | First released version
+	    //===============================================================================
+	END_REGION
+	
+	
+	REGION DESCRIPTION
+	    (/*
+	This function allows the user to set the Mode Transition Configuration for one unit 
+	mode of the FB _LPMLV2022_UnitModeStateManager_ and the FB 
+	_LPMLV2022_UnitModeStateManagerBool_ easily. The output of this function can 
+	directly be assigned to the _LPMLV2022_UnitModeStateManager_ configuration 
+	ModeTransitionCfg[<unit mode>]. The bit locations within the _ModeTransitionCfg_
+	DWord represent state numbers. A set bit means, that a mode transition to or from 
+	the corresponding state is allowed. Note, that the corresponding state bit must be 
+	set for both the current mode and the requested mode.
+	
+	NOTE
+	:   This function is only needed, if another configuration than the default 
+	configuration of the _ModeTransitionCfg_ of the 
+	_LPMLV2022_UnitModeStateManager_ shall be used (default: 16#0000_0214, i.e. 
+	a mode change is possible in the states Stopped, Idle and Aborted).
+	*/)
+	    
+	    
+	END_REGION
+	
+	// Initialize states configuration
+	#ModeTransitionCfg := 16#0000_0000;
+	
+	// Set states configuration
+	#ModeTransitionCfg.%X1  := #Clearing;
+	#ModeTransitionCfg.%X2  := #Stopped;
+	#ModeTransitionCfg.%X3  := #Starting;
+	#ModeTransitionCfg.%X4  := #Idle;
+	#ModeTransitionCfg.%X5  := #Suspended;
+	#ModeTransitionCfg.%X6  := #Execute;
+	#ModeTransitionCfg.%X7  := #Stopping;
+	#ModeTransitionCfg.%X8  := #Aborting;
+	#ModeTransitionCfg.%X9  := #Aborted;
+	#ModeTransitionCfg.%X10 := #Holding;
+	#ModeTransitionCfg.%X11 := #Held;
+	#ModeTransitionCfg.%X12 := #Unholding;
+	#ModeTransitionCfg.%X13 := #Suspending;
+	#ModeTransitionCfg.%X14 := #Unsuspending;
+	#ModeTransitionCfg.%X15 := #Resetting;
+	#ModeTransitionCfg.%X16 := #Completing;
+	#ModeTransitionCfg.%X17 := #Completed;
+END_FUNCTION
+

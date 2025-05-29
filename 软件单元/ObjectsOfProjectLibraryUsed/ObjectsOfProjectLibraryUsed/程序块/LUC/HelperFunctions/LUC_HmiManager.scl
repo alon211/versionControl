@@ -1,0 +1,272 @@
+﻿FUNCTION "LUC_HmiManager" : Void
+TITLE = LUC_HmiManager
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LUC
+VERSION : 1.2
+//Manages the interconection between the header in the HMI and PLC global data
+   VAR_INPUT 
+      modeRequests : Word;   // Mode requests from HMI
+      stateCommands : Word;   // State commands from HMI
+   END_VAR
+
+   VAR_OUTPUT 
+      displayedMode : DInt;   // Current active mode to display in the HMI
+      displayedState : DInt;   // Current active state to display in the HMI
+   END_VAR
+
+   VAR_IN_OUT 
+      modeRequestButtons : "LUC_typeButtons";   // Mode request button properties in the HMI
+      stateCommandButtons : "LUC_typeButtons";   // State commands button properties in the HMI
+      unitData : "LUC_typeManagerInterface";   // Information from te units
+   END_VAR
+
+   VAR_TEMP 
+      tempEnableModes : Word;   // Unit modes that can be visible in the HMI
+      tempModeChangeAllowed : Bool;   // Unit modes that can be visible in the HMI according to if the mode change is allowed or not
+      tempActiveModes : "LUC_typeModeRequests";   // Current active modes in the unit to display in the HMI 
+      tempEnableStateCommands : "LUC_typeStateCommands";   // Auxiliar variable to visualize Reset button in the HMI
+      tempCmdsRequest : "LUC_typeCommands";
+   END_VAR
+
+   VAR CONSTANT 
+      UNDEFINED : DInt := 0;   // State Undefined
+      CLEARING : DInt := 1;   // State Clearing
+      STOPPED : DInt := 2;   // Sstate Stopped
+      STARTING : DInt := 3;   // State Starting
+      IDLE : DInt := 4;   // State Idle
+      SUSPENDED : DInt := 5;   // State Suspended
+      EXECUTE : DInt := 6;   // State Execute
+      STOPPING : DInt := 7;   // State Stopping
+      ABORTING : DInt := 8;   // State Aborting
+      ABORTED : DInt := 9;   // State Aborted
+      HOLDING : DInt := 10;   // State Holding
+      HELD : DInt := 11;   // State Held
+      UNHOLDING : DInt := 12;   // State Unholding
+      SUSPENDING : DInt := 13;   // State Suspending
+      UNSUSPENDING : DInt := 14;   // State Unsuspending
+      RESETTING : DInt := 15;   // State Resetting
+      COMPLETING : DInt := 16;   // State Completing
+      COMPLETED : DInt := 17;   // State Completed
+      VARIOUS : DInt := 18;   // State Various
+      MODE_INVALID : DInt := 0;   // Uniit mode Invalid
+      MODE_PRODUCTION : DInt := 1;   // Unit mode Production
+      MODE_MAINTENANCE : DInt := 2;   // Unit mode Maintenance
+      MODE_MANUAL : DInt := 3;   // Unit mode Manual
+      MODE_USER01 : DInt := 4;   // Unit mode user01
+      MODE_USER02 : DInt := 5;   // Unit mode user02
+      MODE_USER03 : DInt := 6;   // Unit mode user03
+      MODE_USER04 : DInt := 7;   // Unit mode user04
+      MODE_USER05 : DInt := 8;   // Unit mode user05
+      MODE_USER06 : DInt := 9;   // Unit mode user06
+      MODE_USER07 : DInt := 10;   // Unit mode user07
+      MODE_USER08 : DInt := 11;   // Unit mode user08
+      MODE_USER09 : DInt := 12;   // Unit mode user09
+      MODE_USER10 : DInt := 13;   // Unit mode user10
+      MODE_USER11 : DInt := 14;   // Unit mode user11
+      MODE_USER12 : DInt := 15;   // Unit mode user12
+      MODE_USER13 : DInt := 16;   // Unit mode user13
+      MODE_VARIOUS : DInt := 17;   // Unit mode Various
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	  //===============================================================================
+	  // Siemens AG / (c)Copyright 2024
+	  //-------------------------------------------------------------------------------
+	  // Title:            LUC_HmiManager 
+	  // Comment/Function: Manages the interconection between the header in the HMI and PLC global data
+	  // Library/Family:   LUC - Library of Unit Controls
+	  // Author:           Siemens Digital Industries
+	  // Tested with:      S7-PLCSIM Advanced 6.0
+	  // Engineering:      TIA Portal V19
+	  // Restrictions:     -
+	  // Requirements:     -
+	  //-------------------------------------------------------------------------------
+	  // Change log table:
+	  // Version  | Date       | Expert in charge        | Changes applied
+	  //----------|------------|-------------------------|-----------------------------
+	  // 01.01.00 | 21.06.2024 | SIMATIC Systems Support | First released version
+	  // 01.02.00 | 05.09.2024 | SIMATIC Systems Support | Optimized code.
+	  //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	    (/*
+	    This main purpose of this block is to manage the interconnection of the HMI and the global data in the PLC to control and monitor a Unit.
+	
+	#### PLC data to HMI  
+	    This block will evaluate and send to the HMI the properties of the buttons for modes requests and state commands and display the current state and mode of the unit.
+	    1. Mode Requests: The properties sent to the HMI are the following,
+	        * Visibility: The visibility of the buttons is dinamized according to the enabled modes configured through the LUC_StateMachineConfig.
+	        * Operator Control Allowed: The operation allowment of all mode request buttons is set if the mode change is allowed. 
+	        * Active (background color of the button): This property is set if the correspondant mode is active. 
+	    2. State Commands: The properties sent to the HMI are the following,
+	        * Operator Control Allowed: The operation allowment of a state command is set depending on which is the current state and which is the following one. 
+	    3. Current Mode: The plc send the current active mode to display it in the HMI.
+	    4. Current State: The plc send the current active state to display it in the HMI.
+	
+	#### HMI data to PLC 
+	     The hmi send the requested modes and state commands through a word variables _modeRequests_ and _stateCommands_. 
+	*/)
+	END_REGION DESCRIPTION
+	
+	REGION Commands from enabled to operate HMI
+	    REGION Region read commands from HMI
+	        //Mode Requests from the enabled to operate HMI
+	        SCATTER(IN := #modeRequests,
+	                OUT => #tempCmdsRequest.modeRequests);
+	        
+	        //State Commands from the enabled to operate HMI
+	        #tempCmdsRequest.stateCommands.start := #stateCommands.%X0;
+	        #tempCmdsRequest.stateCommands.stop := #stateCommands.%X1;
+	        #tempCmdsRequest.stateCommands.reset := #stateCommands.%X2;
+	        #tempCmdsRequest.stateCommands.clear := #stateCommands.%X3;
+	        #tempCmdsRequest.stateCommands.hold := #stateCommands.%X4;
+	        #tempCmdsRequest.stateCommands.suspend := #stateCommands.%X5;
+	        #tempCmdsRequest.stateCommands.complete := #stateCommands.%X6;
+	        #tempCmdsRequest.stateCommands.abort := #stateCommands.%X7;
+	        #tempCmdsRequest.stateCommands.unhold := #stateCommands.%X8;
+	        #tempCmdsRequest.stateCommands.unsuspend := #stateCommands.%X9;
+	    END_REGION Region read commands from HMI
+	    
+	    //Write request modes and state commands. 
+	    #unitData.commands := #tempCmdsRequest;
+	END_REGION Commands from enabled to operate HMI
+	
+	REGION Button appeteance and current mode and state
+	    //Initialize temporary variables
+	    #tempEnableModes := 16#0;
+	    #tempActiveModes.production :=
+	    #tempActiveModes.maintenance :=
+	    #tempActiveModes.manual :=
+	    #tempActiveModes.userMode01 :=
+	    #tempActiveModes.userMode02 :=
+	    #tempActiveModes.userMode03 :=
+	    #tempActiveModes.userMode04 :=
+	    #tempActiveModes.userMode05 :=
+	    #tempActiveModes.userMode06 :=
+	    #tempActiveModes.userMode07 :=
+	    #tempActiveModes.userMode08 :=
+	    #tempActiveModes.userMode09 :=
+	    #tempActiveModes.userMode10 :=
+	    #tempActiveModes.userMode11 :=
+	    #tempActiveModes.userMode12 :=
+	    #tempActiveModes.userMode13 :=
+	    #tempModeChangeAllowed :=
+	    #tempEnableStateCommands.start :=
+	    #tempEnableStateCommands.stop :=
+	    #tempEnableStateCommands.reset :=
+	    #tempEnableStateCommands.clear :=
+	    #tempEnableStateCommands.hold :=
+	    #tempEnableStateCommands.suspend :=
+	    #tempEnableStateCommands.complete :=
+	    #tempEnableStateCommands.abort :=
+	    #tempEnableStateCommands.unhold :=
+	    #tempEnableStateCommands.unsuspend := false;
+	    
+	    //Set button properties of the enabled to operate HMI according to the current status of the unit
+	    REGION MODE BUTTONS
+	        REGION Visibility modes request
+	            //Evaluation of the modes that are allowed to operate with according to the units selected
+	            #tempEnableModes.%X0 := #unitData.monitoring.curEnabledModes.%X1 OR (#unitData.monitoring.unitModeCurrent = #MODE_PRODUCTION);
+	            #tempEnableModes.%X1 := #unitData.monitoring.curEnabledModes.%X2 OR (#unitData.monitoring.unitModeCurrent = #MODE_MAINTENANCE);
+	            #tempEnableModes.%X2 := #unitData.monitoring.curEnabledModes.%X3 OR (#unitData.monitoring.unitModeCurrent = #MODE_MANUAL);
+	            #tempEnableModes.%X3 := #unitData.monitoring.curEnabledModes.%X4 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER01);
+	            #tempEnableModes.%X4 := #unitData.monitoring.curEnabledModes.%X5 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER02);
+	            #tempEnableModes.%X5 := #unitData.monitoring.curEnabledModes.%X6 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER03);
+	            #tempEnableModes.%X6 := #unitData.monitoring.curEnabledModes.%X7 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER04);
+	            #tempEnableModes.%X7 := #unitData.monitoring.curEnabledModes.%X8 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER05);
+	            #tempEnableModes.%X8 := #unitData.monitoring.curEnabledModes.%X9 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER06);
+	            #tempEnableModes.%X9 := #unitData.monitoring.curEnabledModes.%X10 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER07);
+	            #tempEnableModes.%X10 := #unitData.monitoring.curEnabledModes.%X11 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER08);
+	            #tempEnableModes.%X11 := #unitData.monitoring.curEnabledModes.%X12 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER09);
+	            #tempEnableModes.%X12 := #unitData.monitoring.curEnabledModes.%X13 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER10);
+	            #tempEnableModes.%X13 := #unitData.monitoring.curEnabledModes.%X14 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER11);
+	            #tempEnableModes.%X14 := #unitData.monitoring.curEnabledModes.%X15 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER12);
+	            #tempEnableModes.%X15 := #unitData.monitoring.curEnabledModes.%X16 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER13);
+	            
+	            //Mode requests that are allowed or enabled in the HMI according to the unit status
+	            #modeRequestButtons.visibility := #tempEnableModes;
+	        END_REGION Visibility modes request
+	        
+	        REGION Active modes requests
+	            // Evaluation of the current active modes in the unt status. 
+	            #tempActiveModes.production := (#unitData.monitoring.unitModeCurrent = #MODE_PRODUCTION);
+	            #tempActiveModes.maintenance := (#unitData.monitoring.unitModeCurrent = #MODE_MAINTENANCE);
+	            #tempActiveModes.manual := (#unitData.monitoring.unitModeCurrent = #MODE_MANUAL);
+	            #tempActiveModes.userMode01 := (#unitData.monitoring.unitModeCurrent = #MODE_USER01);
+	            #tempActiveModes.userMode02 := (#unitData.monitoring.unitModeCurrent = #MODE_USER02);
+	            #tempActiveModes.userMode03 := (#unitData.monitoring.unitModeCurrent = #MODE_USER03);
+	            #tempActiveModes.userMode04 := (#unitData.monitoring.unitModeCurrent = #MODE_USER04);
+	            #tempActiveModes.userMode05 := (#unitData.monitoring.unitModeCurrent = #MODE_USER05);
+	            #tempActiveModes.userMode06 := (#unitData.monitoring.unitModeCurrent = #MODE_USER06);
+	            #tempActiveModes.userMode07 := (#unitData.monitoring.unitModeCurrent = #MODE_USER07);
+	            #tempActiveModes.userMode08 := (#unitData.monitoring.unitModeCurrent = #MODE_USER08);
+	            #tempActiveModes.userMode09 := (#unitData.monitoring.unitModeCurrent = #MODE_USER09);
+	            #tempActiveModes.userMode10 := #tempActiveModes.userMode10 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER10);
+	            #tempActiveModes.userMode11 := #tempActiveModes.userMode11 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER11);
+	            #tempActiveModes.userMode12 := #tempActiveModes.userMode12 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER12);
+	            #tempActiveModes.userMode13 := #tempActiveModes.userMode13 OR (#unitData.monitoring.unitModeCurrent = #MODE_USER13);
+	            
+	            //Currrent active modes to show in the HMI according to the unit status
+	            GATHER(IN := #tempActiveModes,
+	                   OUT => #modeRequestButtons.active);
+	        END_REGION Active modes requests
+	        
+	        REGION Operator control allowed mode request
+	            // Evaluation of the current mode requests that are allowed to operate. 
+	            #tempModeChangeAllowed := #tempModeChangeAllowed OR NOT (#unitData.monitoring.allowedUnitModes = 0);
+	            
+	            //Evaluation of the possibility of changing the mode according to the unit status
+	            #modeRequestButtons.operatorControlAllowed.%X0 := #tempModeChangeAllowed;
+	        END_REGION Operator control allowed mode request
+	    END_REGION MODE BUTTONS
+	    
+	    REGION Displayed current mode
+	        #displayedMode := #unitData.monitoring.unitModeCurrent;
+	    END_REGION Displayed current mode
+	    
+	    REGION STATE BUTTONS
+	        REGION Operator control allowed state commands
+	            // Evaluation of the state commands that are allowed to operate according to the current status of the unit.
+	            #tempEnableStateCommands.reset := #tempEnableStateCommands.reset OR ((NOT #unitData.monitoring.curDisabledStates.%X4) AND ((#unitData.monitoring.stateCurrent = #STOPPED) OR (#unitData.monitoring.stateCurrent = #COMPLETED)));
+	            #tempEnableStateCommands.start := #tempEnableStateCommands.start OR ((NOT #unitData.monitoring.curDisabledStates.%X6) AND (#unitData.monitoring.stateCurrent = #IDLE));
+	            #tempEnableStateCommands.stop := #tempEnableStateCommands.stop OR ((NOT #unitData.monitoring.curDisabledStates.%X2) AND (NOT ((#unitData.monitoring.stateCurrent = #ABORTED) OR (#unitData.monitoring.stateCurrent = #ABORTING) OR
+	            (#unitData.monitoring.stateCurrent = #CLEARING) OR (#unitData.monitoring.stateCurrent = #STOPPING)
+	            OR (#unitData.monitoring.stateCurrent = #STOPPED))));
+	            #tempEnableStateCommands.hold := #tempEnableStateCommands.hold OR ((NOT #unitData.monitoring.curDisabledStates.%X11) AND (((#unitData.monitoring.stateCurrent = #EXECUTE) AND (#unitData.monitoring.curHoldCmdCfg.%X6)) OR
+	            ((#unitData.monitoring.stateCurrent = #SUSPENDED) AND (#unitData.monitoring.curHoldCmdCfg.%X5)) OR ((#unitData.monitoring.stateCurrent = #STARTING) AND (#unitData.monitoring.curHoldCmdCfg.%X3)) OR
+	            ((#unitData.monitoring.stateCurrent = #IDLE) AND (#unitData.monitoring.curHoldCmdCfg.%X4)) OR ((#unitData.monitoring.stateCurrent = #UNHOLDING) AND (#unitData.monitoring.curHoldCmdCfg.%X12)) OR
+	            ((#unitData.monitoring.stateCurrent = #SUSPENDING) AND (#unitData.monitoring.curHoldCmdCfg.%X13)) OR ((#unitData.monitoring.stateCurrent = #UNSUSPENDING) AND (#unitData.monitoring.curHoldCmdCfg.%X14)) OR
+	            ((#unitData.monitoring.stateCurrent = #COMPLETING) AND (#unitData.monitoring.curHoldCmdCfg.%X16)) OR ((#unitData.monitoring.stateCurrent = #COMPLETED) AND (#unitData.monitoring.curHoldCmdCfg.%X17))));
+	            #tempEnableStateCommands.unhold := #tempEnableStateCommands.unhold OR ((NOT #unitData.monitoring.curDisabledStates.%X6) AND (#unitData.monitoring.stateCurrent = #HELD));
+	            #tempEnableStateCommands.suspend := #tempEnableStateCommands.suspend OR ((NOT #unitData.monitoring.curDisabledStates.%X5) AND (#unitData.monitoring.stateCurrent = #EXECUTE));
+	            #tempEnableStateCommands.unsuspend := #tempEnableStateCommands.unsuspend OR ((NOT #unitData.monitoring.curDisabledStates.%X6) AND (#unitData.monitoring.stateCurrent = #SUSPENDED));
+	            #tempEnableStateCommands.abort := #tempEnableStateCommands.abort OR ((NOT #unitData.monitoring.curDisabledStates.%X9) AND NOT ((#unitData.monitoring.stateCurrent = #ABORTING) OR (#unitData.monitoring.stateCurrent = #ABORTED)));
+	            #tempEnableStateCommands.clear := #tempEnableStateCommands.clear OR ((NOT #unitData.monitoring.curDisabledStates.%X2) AND (#unitData.monitoring.stateCurrent = #ABORTED));
+	            #tempEnableStateCommands.complete := #tempEnableStateCommands.complete OR ((NOT #unitData.monitoring.curDisabledStates.%X17) AND (((#unitData.monitoring.stateCurrent = #HELD) AND (#unitData.monitoring.curCompleteCmdCfg.%X11)) OR
+	            ((#unitData.monitoring.stateCurrent = #EXECUTE) AND (#unitData.monitoring.curCompleteCmdCfg.%X6)) OR ((#unitData.monitoring.stateCurrent = #SUSPENDED) AND (#unitData.monitoring.curCompleteCmdCfg.%X5))));
+	            
+	            //State Commands that are allowed or enabled in the HMI according to the unit status
+	            #stateCommandButtons.operatorControlAllowed.%X0 := #tempEnableStateCommands.start;
+	            #stateCommandButtons.operatorControlAllowed.%X1 := #tempEnableStateCommands.stop;
+	            #stateCommandButtons.operatorControlAllowed.%X2 := #tempEnableStateCommands.reset;
+	            #stateCommandButtons.operatorControlAllowed.%X3 := #tempEnableStateCommands.clear;
+	            #stateCommandButtons.operatorControlAllowed.%X4 := #tempEnableStateCommands.hold;
+	            #stateCommandButtons.operatorControlAllowed.%X5 := #tempEnableStateCommands.suspend;
+	            #stateCommandButtons.operatorControlAllowed.%X6 := #tempEnableStateCommands.complete;
+	            #stateCommandButtons.operatorControlAllowed.%X7 := #tempEnableStateCommands.abort;
+	            #stateCommandButtons.operatorControlAllowed.%X8 := #tempEnableStateCommands.unhold;
+	            #stateCommandButtons.operatorControlAllowed.%X9 := #tempEnableStateCommands.unsuspend;
+	        END_REGION Operator control allowed state commands
+	    END_REGION STATE BUTTONS
+	    
+	    REGION Displayed current state
+	        #displayedState := #unitData.monitoring.stateCurrent;
+	    END_REGION Displayed current state
+	END_REGION Button appeteance and current mode and state
+	
+END_FUNCTION
+

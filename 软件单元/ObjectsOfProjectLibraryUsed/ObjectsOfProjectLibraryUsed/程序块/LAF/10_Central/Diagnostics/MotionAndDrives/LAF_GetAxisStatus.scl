@@ -1,0 +1,505 @@
+﻿FUNCTION_BLOCK "LAF_GetAxisStatus"
+TITLE = LAF_GetAxisStatus
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+AUTHOR : 'Siemens Digital Industries'
+FAMILY : LAF
+VERSION : 1.2
+//This block reads diagnostic information of an axis depending on the configured technology object and the selected drive object index in the HMI by the operator.
+   VAR_INPUT 
+      enable { S7_PredefinedAssignment := 'TRUE'} : Bool := TRUE;   // FALSE = Disables functionality of FB from user program (optional), FB is normally enabled via HMI ('moduleInterface.hmi.axisScreenActive' = TRUE)
+   END_VAR
+
+   VAR_OUTPUT 
+      valid { ExternalWritable := 'False'} : Bool;   // Valid set of output values available at the FB
+      busy { ExternalWritable := 'False'} : Bool;   // FB is not finished and new output values can be expected
+      error { ExternalWritable := 'False'} : Bool;   // An error occurred during the execution of the FB, for details see diagnostics output
+      status { ExternalWritable := 'False'} : Word := #STATUS_NO_CALL;   // 16#0000 - 16#7FFF: Status of the FB, 16#8000 - 16#FFFF: Error identification
+      diagnostics { ExternalWritable := 'False'} : "LAF_typeDiagnostics";   // Diagnostics information of FB
+   END_VAR
+
+   VAR_IN_OUT 
+      configuration { S7_PredefinedAssignment := 'DriveDiagConfig.driveObjects'} : Array[*] of "LAF_typeDriveDiagConfig";
+      moduleInterface { S7_PredefinedAssignment := 'DriveDiagInterfaceHmi.diagStatus'} : "LAF_typeDriveDiagInterfaceHmi";
+   END_VAR
+
+   VAR 
+      statInternal { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Static structure for internal tags
+         enablePrevious { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Previous value of 'enable' input for edge detection
+         valid { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Value for output 'valid'
+         busy { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Value for output 'busy'
+         error { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Value for output 'error'
+         errorUserCleared { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Error occurred that can only be solved by user; rising edge at enable input necessary
+         errorAutoCleared { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Error occurred that can be acknowledged by FB
+         disablingCompleted { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // TRUE: Disabling has been completed
+         diagnostics { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LAF_typeDiagnostics" := (#STATUS_NO_CALL, (), ());
+         emptyDiagnostics { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "LAF_typeDiagnostics" := (#STATUS_NO_CALL, (), ());   // Empty diagnostics information (for initialization purposes only)
+      END_STRUCT;
+      statMainState { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt := #FB_STATE_NO_PROCESSING;   // State in the state machine of the FB
+      statArrayMin { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Lower bound of configuration array
+      statArrayMax { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : DInt;   // Upper bound of configuration array
+   END_VAR
+
+   VAR_TEMP 
+      tempEnable : Bool;   // Temporary value for input 'enable'
+      tempReferenceDesignator : WString[128];   // Temporary value for inout 'referenceDesignator'
+      tempDriveIndex : DInt;   // Temporary value for inout 'driveIndex'
+      tempSensorIndex : DInt;   // Temporary index for loop
+      tempAxisDB : DB_ANY;   // Temporary value for inout 'axisDB'
+      tempAxis : "LAF_typeAxisDiagData";   // Temporary data of technology object
+      tempEmptyAxis : "LAF_typeAxisDiagData";   // Empty data of technology object (for initialization purposes only)
+      tempRefSpeedAxis {InstructionName := 'TO_SpeedAxis'; LibVersion := '8.0'} : REF_TO TO_SpeedAxis;   // Temporary reference to speed axis
+      tempRefPositioningAxis {InstructionName := 'TO_PositioningAxis'; LibVersion := '8.0'} : REF_TO TO_PositioningAxis;   // Temporary reference to positioning axis
+      tempRefSynchronousAxis {InstructionName := 'TO_SynchronousAxis'; LibVersion := '8.0'} : REF_TO TO_SynchronousAxis;   // Temporary reference to synchronous axis
+      tempRefExternalEncoder {InstructionName := 'TO_ExternalEncoder'; LibVersion := '8.0'} : REF_TO TO_ExternalEncoder;   // Temporary reference to external encoder
+   END_VAR
+
+   VAR CONSTANT 
+      FB_STATE_NO_PROCESSING : DInt := 0;   // FB state: No processing
+      FB_STATE_ENABLING : DInt := 10;   // FB state: Enabling
+      FB_STATE_PROCESSING : DInt := 50;   // FB state: Processing
+      FB_STATE_DISABLING : DInt := 90;   // FB state: Disabling
+      STATUS_NO_CALL : Word := 16#7000;   // No job being currently processed
+      STATUS_FIRST_CALL : Word := 16#7001;   // First call after incoming new job (rising edge 'enable')
+      STATUS_SUBSEQUENT_CALL : Word := 16#7002;   // Subsequent call during active processing without further details
+      STATUS_WARN_ARRY_MIN : Word := 16#7003;   // Active processing with index assigned to lower bound of configuration arry
+      STATUS_WARN_ARRY_MAX : Word := 16#7004;   // Active processing with index assigned to upper bound of configuration arry
+      STAUTS_WARN_NO_AXIS : Word := 16#7005;   // No axis found, active processing delets interface
+      SUB_STATUS_NO_ERROR : Word := 16#0000;   // NO error occurred in sub function call
+      ERR_UNDEFINED_STATE : Word := 16#8600;   // Error: due to an undefined state in state machine
+      STATUS_ERR_REF_TO_SPEED_AXIS : Word := 16#9001;   // Error: NULL pointer for reference to TO_SpeedAxis 
+      STATUS_ERR_REF_TO_POSITIONING_AXIS : Word := 16#9002;   // Error: NULL pointer for reference to TO_PositioningAxis
+      STATUS_ERR_REF_TO_SYNCHRONOUS_AXIS : Word := 16#9003;   // Error: NULL pointer for reference to TO_SynchronousAxis
+      STATUS_ERR_REF_TO_EXTERNAL_ENCODER : Word := 16#9004;   // Error: NULL pointer for reference to TO_SynchronousAxis
+      LOWER_BOUND_ARRAY_SENSOR : DInt := 1;   // Lower bound of sensor array in DB of technology object
+      UPPER_BOUND_ARRAY_SENSOR : DInt := 4;   // Upper bound of sensor array in DB of technology object
+      DIM_ARRAY_CONFIG : UDInt := 1;   // Dimension of the configuration array
+      NO_SENSOR : UDInt := 0;   // Axis supports no sensor/encoder
+      ONLY_ONE_SENSOR : DInt := 1;   // External encoder supports only one sensor/encoder
+      TYPE_OF_AXIS_NO_AXIS : UDInt := 0;   // Type of axis not found
+      TYPE_OF_AXIS_SPEED_AXIS : UDInt := 1;   // Type of axis is TO_SpeedAxis
+      TYPE_OF_AXIS_POSITIONING_AXIS : UDInt := 2;   // Type of axis is TO_PositioningAxis
+      TYPE_OF_AXIS_SYNCHRONOUS_AXIS : UDInt := 3;   // Type of axis is TO_SynchronousAxis
+      TYPE_OF_AXIS_EXTERNAL_ENCODER : UDInt := 4;   // Type of axis is TO_ExternalEncoder
+   END_VAR
+
+
+BEGIN
+	REGION BLOCK INFO HEADER
+	    //===============================================================================
+	    // Siemens AG / (c)Copyright 2024
+	    //-------------------------------------------------------------------------------
+	    // Title:            LAF_GetAxisStatus
+	    // Comment/Function: This block reads diagnostic information of an axis depending
+	    //                   on the configured technology object and the selected drive
+	    //                   object index in the HMI by the operator.
+	    // Library/Family:   Automation Framework / Drive Diagnostic
+	    // Author:           Siemens Digital Industries
+	    // Tested with:      S7-PLCSIM Advanced 6.0
+	    // Engineering:      TIA Portal V19
+	    // Restrictions:     -
+	    // Requirements:     -
+	    //-------------------------------------------------------------------------------
+	    // Change log table:
+	    // Version  | Date       | Expert in charge        | Changes applied
+	    //----------|------------|-------------------------|-----------------------------
+	    // 01.00.00 | 15.12.2023 | SIMATIC Systems Support | First released version
+	    // 01.01.00 | 30.06.2024 | SIMATIC Systems Support | UDTs updated, Enable/Disable
+	    // 01.02.00 | 30.09.2024 | SIMATIC Systems Support | Block information properties updated
+	    //===============================================================================
+	END_REGION BLOCK INFO HEADER
+	
+	REGION DESCRIPTION
+	(/*
+	This block reads diagnostic information (setpoint and actual values, status words,
+	sensor and positioning status) of an axis, by using a reference (REF_TO) to the
+	configured technology object. At runtime, this block is enabled when the axis 
+	diagnostic screen is shown in the HMI. Based on the selected drive object (index) 
+	in the HMI by the operator, the diagnostic information is read out from the technology
+	object and transmitted to the HMI. The shown information in the HMI depends on the
+	type of the technology object. Therefore the axis DB of the technology object must
+	be specified in the configuration DB.
+	*/)
+	END_REGION DESCRIPTION
+	
+	REGION INPUTS
+	    // Work with temporary values / create process image   
+	    #tempEnable := #enable AND #moduleInterface.hmi.axisStatusScreenActive;
+	    #tempDriveIndex := #moduleInterface.hmi.driveIndex;
+	END_REGION INPUTS
+	
+	REGION ENABLING/DISABLING
+	    IF (#tempEnable = TRUE) AND (#statInternal.diagnostics.status = #STATUS_NO_CALL) THEN // Enable FB
+	    // First call; initialize FB
+	    #statInternal.valid := TRUE;
+	    #statInternal.busy := TRUE;
+	    #statInternal.error := FALSE;
+	    #statInternal.errorUserCleared := FALSE;
+	    #statInternal.errorAutoCleared := FALSE;
+	    #statInternal.disablingCompleted := FALSE;
+	    #statInternal.diagnostics := #statInternal.emptyDiagnostics;
+	    #diagnostics := #statInternal.emptyDiagnostics;
+	    #statInternal.diagnostics.status := #STATUS_FIRST_CALL;
+	    // State machine - start processing
+	    #statMainState := #FB_STATE_ENABLING;
+	    // Initialize axis data
+	    #moduleInterface.axis := #tempEmptyAxis;
+	    
+	  ELSIF (#tempEnable = FALSE) AND (#statInternal.enablePrevious = TRUE) THEN // Disable FB 
+	    #statMainState := #FB_STATE_DISABLING;
+	    
+	  ELSIF (#statInternal.diagnostics.status = #STATUS_FIRST_CALL) THEN // Set status identifier of subsequent call
+	    #statInternal.diagnostics.status := #STATUS_SUBSEQUENT_CALL;
+	  END_IF;
+	  
+	  // Edge detection 'tempEnable' 
+	  #statInternal.enablePrevious := #tempEnable;
+	END_REGION ENABLING/DISABLING
+	
+	IF (#statInternal.diagnostics.status = #STATUS_NO_CALL) THEN // Nothing to do -> End here to reduce "system load"
+	  RETURN;
+	END_IF;
+	
+	REGION STATE MACHINE
+	  CASE #statMainState OF // State machine of FB
+	    #FB_STATE_NO_PROCESSING:
+	      REGION No Processing
+	        ; // No processing active (Note: this state must always be present and left empty)
+	      END_REGION No Processing
+	      
+	    #FB_STATE_ENABLING: // Enabling active
+	      REGION Enabling
+	        // Initialize boundaries of configuration array
+	        #statArrayMin := LOWER_BOUND(ARR := #configuration, DIM := #DIM_ARRAY_CONFIG);
+	        #statArrayMax := UPPER_BOUND(ARR := #configuration, DIM := #DIM_ARRAY_CONFIG);
+	        // Continue processing with next state
+	        #statMainState := #FB_STATE_PROCESSING;
+	      END_REGION Enabling
+	      
+	    #FB_STATE_PROCESSING: // Processing active
+	      REGION Processing
+	        // When index is off boundaries, index is assigned to violated bound and active processing with warning
+	        IF (#tempDriveIndex < #statArrayMin) THEN
+	          #tempDriveIndex := #statArrayMin;
+	          #statInternal.diagnostics.status := #STATUS_WARN_ARRY_MIN;
+	          #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	          #statInternal.diagnostics.stateNumber := #statMainState;
+	        ELSIF (#tempDriveIndex > #statArrayMax)THEN
+	           #tempDriveIndex := #statArrayMax;
+	           #statInternal.diagnostics.status := #STATUS_WARN_ARRY_MAX;
+	           #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	           #statInternal.diagnostics.stateNumber := #statMainState;
+	        ELSE
+	           #statInternal.diagnostics.status := #STATUS_SUBSEQUENT_CALL;
+	           #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	           #statInternal.diagnostics.stateNumber := #statMainState;
+	        END_IF;
+	        
+	        // Work with temporary values
+	        #tempAxisDB := #configuration[#tempDriveIndex].axisDB;
+	        
+	        // Get reference designator
+	        #tempReferenceDesignator := #configuration[#tempDriveIndex].referenceDesignator;
+	        
+	        // Get type of axis
+	        CASE TypeOfDB(#tempAxisDB) OF
+	          _.TO_SpeedAxis:
+	            REGION TO_SpeedAxis
+	              #tempAxis.type := #TYPE_OF_AXIS_SPEED_AXIS;
+	              #tempRefSpeedAxis ?= #tempAxisDB;
+	              // Check reference points to an object
+	              IF #tempRefSpeedAxis <> NULL  THEN
+	                // Get setpoint and actual values
+	                #tempAxis.values.velocity := #tempRefSpeedAxis^.Velocity;
+	                #tempAxis.values.actualSpeed := #tempRefSpeedAxis^.ActualSpeed;
+	                // Get StatusWord
+	                #tempAxis.statusAxis.statusWord := #tempRefSpeedAxis^.StatusWord;
+	                SCATTER(IN := #tempAxis.statusAxis.statusWord,
+	                        OUT => #tempAxis.statusAxis.status);
+	                // Get StatusWord2
+	                #tempAxis.statusAxis.statusWord2 := #tempRefSpeedAxis^.StatusWord2;
+	                SCATTER(IN := #tempAxis.statusAxis.statusWord2,
+	                        OUT => #tempAxis.statusAxis.status2);
+	                // Get WarningWord
+	                #tempAxis.statusAxis.warningWord := #tempRefSpeedAxis^.WarningWord;
+	                SCATTER(IN := #tempAxis.statusAxis.warningWord,
+	                        OUT => #tempAxis.statusAxis.warning);
+	                // Get ErrorWord
+	                #tempAxis.statusAxis.errorWord := #tempRefSpeedAxis^.ErrorWord;
+	                SCATTER(IN := #tempAxis.statusAxis.errorWord,
+	                        OUT => #tempAxis.statusAxis.error);
+	                // Get ErrorDetail
+	                #tempAxis.statusAxis.errorDetail.number := #tempRefSpeedAxis^.ErrorDetail.Number;
+	                #tempAxis.statusAxis.errorDetail.reaction := #tempRefSpeedAxis^.ErrorDetail.Reaction;
+	                // Get sensor status
+	                #tempAxis.statusSensor.operativeSensor := #NO_SENSOR; // No sensor supported by TO_SpeedAxis
+	                // Get positioning status, no positioning supported by TO_SpeedAxis
+	                // Get units
+	                #tempAxis.units.lengthUnit := #tempRefSpeedAxis^.Units.LengthUnit;
+	                #tempAxis.units.velocityUnit := #tempRefSpeedAxis^.Units.VelocityUnit;
+	              ELSE
+	                // Error NULL pointer --> set block status
+	                #statInternal.diagnostics.status := #STATUS_ERR_REF_TO_SPEED_AXIS;
+	                #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                #statInternal.diagnostics.stateNumber := #statMainState;
+	                #statInternal.errorUserCleared := TRUE;
+	              END_IF;
+	            END_REGION TO_SpeedAxis
+	          
+	          _.TO_PositioningAxis:
+	            REGION TO_PositioningAxis
+	              #tempAxis.type := #TYPE_OF_AXIS_POSITIONING_AXIS;
+	              #tempRefPositioningAxis ?= #tempAxisDB;
+	              // Check reference points to an object
+	              IF #tempRefPositioningAxis <> NULL THEN
+	                  // Get setpoint and actual values
+	                  #tempAxis.values.position := #tempRefPositioningAxis^.Position;
+	                  #tempAxis.values.velocity := #tempRefPositioningAxis^.Velocity;
+	                  #tempAxis.values.actualPosition := #tempRefPositioningAxis^.ActualPosition;
+	                  #tempAxis.values.actualVelocity := #tempRefPositioningAxis^.ActualVelocity;
+	                  #tempAxis.values.actualSpeed := #tempRefPositioningAxis^.ActualSpeed;
+	                  // Get StatusWord
+	                  #tempAxis.statusAxis.statusWord := #tempRefPositioningAxis^.StatusWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.statusWord,
+	                          OUT => #tempAxis.statusAxis.status);
+	                  // Get StatusWord2
+	                  #tempAxis.statusAxis.statusWord2 := #tempRefPositioningAxis^.StatusWord2;
+	                  SCATTER(IN := #tempAxis.statusAxis.statusWord2,
+	                          OUT => #tempAxis.statusAxis.status2);
+	                  // Get WarningWord
+	                  #tempAxis.statusAxis.warningWord := #tempRefPositioningAxis^.WarningWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.warningWord,
+	                          OUT => #tempAxis.statusAxis.warning);
+	                  // Get ErrorWord
+	                  #tempAxis.statusAxis.errorWord := #tempRefPositioningAxis^.ErrorWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.errorWord,
+	                          OUT => #tempAxis.statusAxis.error);
+	                  // Get ErrorDetail
+	                  #tempAxis.statusAxis.errorDetail.number := #tempRefPositioningAxis^.ErrorDetail.Number;
+	                  #tempAxis.statusAxis.errorDetail.reaction := #tempRefPositioningAxis^.ErrorDetail.Reaction;
+	                  // Get sensor status
+	                  #tempAxis.statusSensor.operativeSensor := #tempRefPositioningAxis^.OperativeSensor;
+	                  FOR #tempSensorIndex := #LOWER_BOUND_ARRAY_SENSOR TO #UPPER_BOUND_ARRAY_SENSOR DO
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].state := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].State;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].communicationOK := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].CommunicationOK;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].error := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].Error;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].control := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].Control;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].position := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].Position;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].velocity := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].Velocity;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].adaptionState := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].AdaptionState;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].adjusted := #tempRefPositioningAxis^.StatusSensor[#tempSensorIndex].Adjusted;
+	                    END_FOR;
+	                  // Get positioning status
+	                  #tempAxis.statusPositioning.targetPosition := #tempRefPositioningAxis^.StatusPositioning.TargetPosition;
+	                  #tempAxis.statusPositioning.followingError := #tempRefPositioningAxis^.StatusPositioning.FollowingError;
+	                  // Get units
+	                  #tempAxis.units.lengthUnit := #tempRefPositioningAxis^.Units.LengthUnit;
+	                  #tempAxis.units.velocityUnit := #tempRefPositioningAxis^.Units.VelocityUnit;
+	              ELSE
+	                  // Error NULL pointer --> set block status
+	                  #statInternal.diagnostics.status := #STATUS_ERR_REF_TO_POSITIONING_AXIS;
+	                  #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                  #statInternal.diagnostics.stateNumber := #statMainState;
+	                  #statInternal.errorUserCleared := TRUE;
+	              END_IF;
+	            END_REGION TO_PositioningAxis
+	          
+	          _.TO_SynchronousAxis:
+	            REGION TO_SynchronousAxis
+	              #tempAxis.type := #TYPE_OF_AXIS_SYNCHRONOUS_AXIS;
+	              #tempRefSynchronousAxis ?= #tempAxisDB;
+	              // Check reference points to an object
+	              IF #tempRefSynchronousAxis <> NULL THEN
+	                  // Get setpoint and actual values
+	                  #tempAxis.values.position := #tempRefSynchronousAxis^.Position;
+	                  #tempAxis.values.velocity := #tempRefSynchronousAxis^.Velocity;
+	                  #tempAxis.values.actualPosition := #tempRefSynchronousAxis^.ActualPosition;
+	                  #tempAxis.values.actualVelocity := #tempRefSynchronousAxis^.ActualVelocity;
+	                  #tempAxis.values.actualSpeed := #tempRefSynchronousAxis^.ActualSpeed;
+	                  // Get StatusWord
+	                  #tempAxis.statusAxis.statusWord := #tempRefSynchronousAxis^.StatusWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.statusWord,
+	                          OUT => #tempAxis.statusAxis.status);
+	                  // Get StatusWord2
+	                  #tempAxis.statusAxis.statusWord2 := #tempRefSynchronousAxis^.StatusWord2;
+	                  SCATTER(IN := #tempAxis.statusAxis.statusWord2,
+	                          OUT => #tempAxis.statusAxis.status2);
+	                  // Get WarningWord
+	                  #tempAxis.statusAxis.warningWord := #tempRefSynchronousAxis^.WarningWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.warningWord,
+	                          OUT => #tempAxis.statusAxis.warning);
+	                  // Get ErrorWord
+	                  #tempAxis.statusAxis.errorWord := #tempRefSynchronousAxis^.ErrorWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.errorWord,
+	                          OUT => #tempAxis.statusAxis.error);
+	                  // Get ErrorDetail
+	                  #tempAxis.statusAxis.errorDetail.number := #tempRefSynchronousAxis^.ErrorDetail.Number;
+	                  #tempAxis.statusAxis.errorDetail.reaction := #tempRefSynchronousAxis^.ErrorDetail.Reaction;
+	                  // Get sensor status
+	                  #tempAxis.statusSensor.operativeSensor := #tempRefSynchronousAxis^.OperativeSensor;
+	                  FOR #tempSensorIndex := #LOWER_BOUND_ARRAY_SENSOR TO #UPPER_BOUND_ARRAY_SENSOR DO
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].state := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].State;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].communicationOK := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].CommunicationOK;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].error := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].Error;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].control := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].Control;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].position := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].Position;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].velocity := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].Velocity;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].adaptionState := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].AdaptionState;
+	                      #tempAxis.statusSensor.sensor[#tempSensorIndex].adjusted := #tempRefSynchronousAxis^.StatusSensor[#tempSensorIndex].Adjusted;
+	                  END_FOR;
+	                  // Get positioning status
+	                  #tempAxis.statusPositioning.targetPosition := #tempRefSynchronousAxis^.StatusPositioning.TargetPosition;
+	                  #tempAxis.statusPositioning.followingError := #tempRefSynchronousAxis^.StatusPositioning.FollowingError;
+	                  // Get units
+	                  #tempAxis.units.lengthUnit := #tempRefSynchronousAxis^.Units.LengthUnit;
+	                  #tempAxis.units.velocityUnit := #tempRefSynchronousAxis^.Units.VelocityUnit;
+	              ELSE
+	                  // Error NULL pointer --> set block status
+	                  #statInternal.diagnostics.status := #STATUS_ERR_REF_TO_SYNCHRONOUS_AXIS;
+	                  #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                  #statInternal.diagnostics.stateNumber := #statMainState;
+	                  #statInternal.errorUserCleared := TRUE;
+	              END_IF;
+	            END_REGION TO_SynchronousAxis
+	           
+	          _.TO_ExternalEncoder:
+	            REGION TO_ExternalEncoder
+	              #tempAxis.type := #TYPE_OF_AXIS_EXTERNAL_ENCODER;
+	              #tempRefExternalEncoder ?= #tempAxisDB;
+	              // Check reference points to an object
+	              IF #tempRefExternalEncoder <> NULL THEN
+	                  // Get setpoint and actual values
+	                  #tempAxis.values.actualPosition := #tempRefExternalEncoder^.ActualPosition;
+	                  #tempAxis.values.actualVelocity := #tempRefExternalEncoder^.ActualVelocity;
+	                  // Get StatusWord
+	                  #tempAxis.statusAxis.statusWord := #tempRefExternalEncoder^.StatusWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.statusWord,
+	                          OUT => #tempAxis.statusAxis.status);
+	                  // Get StatusWord2, no StatusWord2 supported by TO_ExternalEncoder
+	                  // Get WarningWord
+	                  #tempAxis.statusAxis.warningWord := #tempRefExternalEncoder^.WarningWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.warningWord,
+	                          OUT => #tempAxis.statusAxis.warning);
+	                  // Get ErrorWord
+	                  #tempAxis.statusAxis.errorWord := #tempRefExternalEncoder^.ErrorWord;
+	                  SCATTER(IN := #tempAxis.statusAxis.errorWord,
+	                          OUT => #tempAxis.statusAxis.error);
+	                  // Get ErrorDetail
+	                  #tempAxis.statusAxis.errorDetail.number := #tempRefExternalEncoder^.ErrorDetail.Number;
+	                  #tempAxis.statusAxis.errorDetail.reaction := #tempRefExternalEncoder^.ErrorDetail.Reaction;
+	                  // Get sensor status
+	                  #tempAxis.statusSensor.operativeSensor := DINT_TO_UDINT(#ONLY_ONE_SENSOR); // Only one sensor supported by TO_ExternalEncoder
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].state := #tempRefExternalEncoder^.StatusSensor.State;
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].communicationOK := #tempRefExternalEncoder^.StatusSensor.CommunicationOK;
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].error := #tempRefExternalEncoder^.StatusSensor.Error;
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].control := #tempRefExternalEncoder^.StatusSensor.Control;
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].position := #tempRefExternalEncoder^.StatusSensor.Position;
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].velocity := #tempRefExternalEncoder^.StatusSensor.Velocity;
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].adaptionState := #tempRefExternalEncoder^.StatusSensor.AdaptionState;
+	                  #tempAxis.statusSensor.sensor[#ONLY_ONE_SENSOR].adjusted := #tempRefExternalEncoder^.StatusSensor.Adjusted;
+	                  // Get positioning status, no positioning supported by TO_SpeedAxis
+	                  // Get units
+	                  #tempAxis.units.lengthUnit := #tempRefExternalEncoder^.Units.LengthUnit;
+	                  #tempAxis.units.velocityUnit := #tempRefExternalEncoder^.Units.VelocityUnit;
+	              ELSE
+	                  // Error NULL pointer --> set block status
+	                  #statInternal.diagnostics.status := #STATUS_ERR_REF_TO_EXTERNAL_ENCODER;
+	                  #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	                  #statInternal.diagnostics.stateNumber := #statMainState;
+	                  #statInternal.errorUserCleared := TRUE;
+	              END_IF;
+	            END_REGION TO_ExternalEncoder
+	            
+	        ELSE
+	          REGION NO_Axis
+	            // Type of axis not found --> delete interface  
+	            #tempReferenceDesignator := WSTRING#'';
+	            #tempAxis := #tempEmptyAxis;
+	            #tempAxis.type := #TYPE_OF_AXIS_NO_AXIS;
+	            // Set block status
+	            #statInternal.diagnostics.status := #STAUTS_WARN_NO_AXIS;
+	            #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	            #statInternal.diagnostics.stateNumber := #statMainState;
+	          END_REGION NO_Axis       
+	        END_CASE;
+	    END_REGION Processing
+	      
+	    #FB_STATE_DISABLING: // Disabling active
+	      REGION Disabling
+	        // Delete interface
+	        #tempReferenceDesignator := WSTRING#'';
+	        #tempAxis := #tempEmptyAxis;
+	        // When disabling is complete the '#statDisablingCompleted' must be set
+	        #statInternal.disablingCompleted := TRUE;
+	      END_REGION Disabling
+	      
+	    ELSE // Undefined state in state machine reached
+	      REGION Undefined state
+	        #statInternal.diagnostics.status := #ERR_UNDEFINED_STATE;
+	        #statInternal.diagnostics.subfunctionStatus := #SUB_STATUS_NO_ERROR;
+	        #statInternal.diagnostics.stateNumber := #statMainState;
+	        #statInternal.errorUserCleared := TRUE;
+	      END_REGION Undefined state
+	  END_CASE;
+	END_REGION STATE MACHINE
+	
+	REGION OUTPUTS
+	  // Write outputs
+	  IF (#statInternal.disablingCompleted = TRUE) THEN
+	    REGION Disabling
+	      // Reset outputs if disabling completed
+	      #statInternal.valid := FALSE;
+	      #statInternal.busy := FALSE;
+	      #statInternal.error := FALSE;
+	      #statInternal.errorUserCleared := FALSE;
+	      #statInternal.errorAutoCleared := FALSE;
+	      #statInternal.diagnostics.status := #STATUS_NO_CALL;
+	      #statMainState := #FB_STATE_NO_PROCESSING;
+	    END_REGION Disabling
+	    
+	  ELSIF (#statInternal.errorUserCleared = TRUE) AND (#statInternal.error = FALSE) THEN
+	    REGION Error user cleared
+	      // Error can only be cleared by user; rising edge for 'tempEnable' is needed to continue 
+	      #statInternal.valid := FALSE;
+	      #statInternal.busy := FALSE;
+	      #statInternal.error := TRUE;
+	      // Write diagnostics
+	      //#diagnostics := #statDiagnostic;
+	      #diagnostics := #statInternal.diagnostics;
+	      // execution aborted --> set state no processing
+	      #statMainState := #FB_STATE_NO_PROCESSING;
+	    END_REGION Error user cleared
+	    
+	  ELSIF (#statInternal.errorAutoCleared = TRUE) AND (#statInternal.error = FALSE) THEN
+	    REGION Error auto cleared
+	      // Error can be reset by FB automatically
+	      #statInternal.valid := FALSE;
+	      #statInternal.busy := TRUE;
+	      #statInternal.error := TRUE;
+	      // Write diagnostics
+	      #diagnostics := #statInternal.diagnostics;
+	    END_REGION Error auto cleared
+	    
+	  ELSIF (#statInternal.errorAutoCleared = FALSE) AND (#statInternal.errorUserCleared = FALSE) AND (#statInternal.error = TRUE) THEN
+	    REGION After user/auto cleared or command aborted
+	      // If autocleared error is acknowledged
+	      #statInternal.valid := TRUE;
+	      #statInternal.busy := TRUE;
+	      #statInternal.error := FALSE;
+	    END_REGION After user/auto cleared or command aborted
+	  END_IF;
+	  
+	  REGION Write static/temp values to outputs
+	    #valid := #statInternal.valid;
+	    #busy := #statInternal.busy;
+	    #error := #statInternal.error;
+	    #status := #statInternal.diagnostics.status;
+	    // ENO mechanism
+	    ENO := NOT #statInternal.error;
+	    // Application specific values to outputs
+	    #moduleInterface.hmi.referenceDesignator := #tempReferenceDesignator;
+	    #moduleInterface.axis := #tempAxis;
+	  END_REGION Write static/temp values to outputs
+	END_REGION OUTPUTS
+	
+END_FUNCTION_BLOCK
+
